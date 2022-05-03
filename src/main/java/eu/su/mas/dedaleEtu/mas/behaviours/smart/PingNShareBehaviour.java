@@ -4,6 +4,7 @@ import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.smart.ExploreFSMAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -12,6 +13,7 @@ import jade.lang.acl.UnreadableException;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 
 public class PingNShareBehaviour extends OneShotBehaviour {
@@ -57,10 +59,10 @@ public class PingNShareBehaviour extends OneShotBehaviour {
         if (msgReceived !=  null) {
             // If received ping message
             if (msgReceived.getProtocol().equals("SHARE-PING")) {
-                System.out.println(this.myAgent.getLocalName() + " received : " + msgReceived.getContent());
-                System.out.println("Sender is : " + msgReceived.getSender().getLocalName());
                 this.shareMap(msgReceived.getSender());
-                System.out.println(this.myAgent.getLocalName() + " send Map");
+                if (((ExploreFSMAgent)this.myAgent).getTreasuresMap().size()>0)
+                    this.shareTreasuresMap(msgReceived.getSender());
+                System.out.println(this.myAgent.getLocalName() + " share his knowledge");
             }
             // If received map
             else if (msgReceived.getProtocol().equals("SHARE-MAP")) {
@@ -73,7 +75,16 @@ public class PingNShareBehaviour extends OneShotBehaviour {
                 ((ExploreFSMAgent)this.myAgent).myMap.mergeMap(receivedMap);
                 System.out.println("Map Merged");
             }
-            
+            else if (msgReceived.getProtocol().equals("SHARE-TREASURE")) {
+                HashMap<String, Treasure> receivedTreasuresMap = null;
+                try {
+                    receivedTreasuresMap = (HashMap<String, Treasure>) msgReceived.getContentObject();
+                } catch (UnreadableException e) {
+                    e.printStackTrace();
+                }
+                ((ExploreFSMAgent)this.myAgent).mergeTreasuresMap(receivedTreasuresMap);
+                System.out.println("Treasures Map Merged");
+            }
             else if (msgReceived.getProtocol().equals("SHARE-PAST-POSITION")) {
             	List<String> receivedPastPos = null;
                 try {
@@ -104,6 +115,21 @@ public class PingNShareBehaviour extends OneShotBehaviour {
             e.printStackTrace();
         }
         ((AbstractDedaleAgent)this.myAgent).sendMessage(mapMsg);
+    }
+
+    private void shareTreasuresMap(AID sender) {
+        ACLMessage treasureMapMsg = new ACLMessage(ACLMessage.INFORM);
+        treasureMapMsg.setProtocol("SHARE-TREASURE");
+        treasureMapMsg.setSender(this.myAgent.getAID());
+        treasureMapMsg.addReceiver(sender);
+
+        HashMap<String, Treasure> tm = ((ExploreFSMAgent)this.myAgent).getTreasuresMap();
+        try {
+            treasureMapMsg.setContentObject(tm);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ((AbstractDedaleAgent)this.myAgent).sendMessage(treasureMapMsg);
     }
     
     //Only send a message if it is blocked

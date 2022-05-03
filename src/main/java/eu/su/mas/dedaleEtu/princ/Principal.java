@@ -6,6 +6,7 @@ import java.util.List;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agents.GateKeeperAgent;
+import eu.su.mas.dedale.mas.agents.dedaleDummyAgents.DummyWumpusShift;
 import eu.su.mas.dedaleEtu.mas.agents.smart.ExploreFSMAgent;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
@@ -295,32 +296,32 @@ public class Principal {
 		 * GOLEM
 		 *********/
 		//1) Get the container where the agent will appear
-		//		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
-		//		Assert.assertNotNull("This container does not exist",c);
-		//
-		//		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
-		//		agentName="Golem1";
-		//
-		//		//3) If you want to give specific parameters to your agent, add them here
-		//		Object [] entityParameters={"My parameters"};
-		//
-		//		//4) Give the class name of your agent to let the system instantiate it
-		//		ag=createNewDedaleAgent(c, agentName, DummyWumpusShift.class.getName(), entityParameters);
-		//		agentList.add(ag);	
+		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
+		Assert.assertNotNull("This container does not exist",c);
 
-		//		//1) Get the container where the agent will appear
-		//		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
-		//		Assert.assertNotNull("This container does not exist",c);
-		//
-		//		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
-		//		agentName="Golem2";
-		//
-		//		//3) If you want to give specific parameters to your agent, add them here
-		//		Object [] entityParametersg2={"My parameters"};
-		//
-		//		//4) Give the class name of your agent to let the system instantiate it
-		//		ag=createNewDedaleAgent(c, agentName, DummyWumpusShift.class.getName(), entityParametersg2);
-		//		agentList.add(ag);	
+		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
+		agentName="Golem1";
+
+		//3) If you want to give specific parameters to your agent, add them here
+		Object [] entityParametersGolem={"Golem1", "Golem2"};
+
+		//4) Give the class name of your agent to let the system instantiate it
+		ag=createNewDedaleAgent(c, agentName, DummyWumpusShift.class.getName(), entityParametersGolem);
+		agentList.add(ag);
+
+		//1) Get the container where the agent will appear
+//		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
+//		Assert.assertNotNull("This container does not exist",c);
+//
+//		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
+//		agentName="Golem2";
+//
+//		//3) If you want to give specific parameters to your agent, add them here
+//		Object [] entityParametersg2={"My parameters"};
+//
+//		//4) Give the class name of your agent to let the system instantiate it
+//		ag=createNewDedaleAgent(c, agentName, DummyWumpusShift.class.getName(), entityParametersGolem);
+//		agentList.add(ag);
 
 		/*********
 		 * AGENT FSM1

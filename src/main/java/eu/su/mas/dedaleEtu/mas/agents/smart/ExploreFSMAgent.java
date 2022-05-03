@@ -5,21 +5,23 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.smart.*;
+import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentState;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.FSMBehaviour;
 import jade.lang.acl.ACLMessage;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     private static final long serialVersionUID = -7969469610244668140L;
     public MapRepresentation myMap;
     private Observation treasureType;
+    private AgentState agentState;
+    private HashMap<String, Treasure> treasuresMap = new HashMap<>();
+    private int totalStep;
 
     // State names
     private static final String A = "A";
@@ -42,6 +44,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         super.setup();
 
         this.treasureType = Observation.ANY_TREASURE;
+        this.agentState = AgentState.EXPLORE;
+        this.totalStep = 0;
 
         final Object[] args = getArguments();
         List<String> receivers = this.getReceivers(args);
@@ -74,7 +78,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
             System.exit(-1);
         } else {
             int i = 2;// WARNING YOU SHOULD ALWAYS START AT 2. This will be corrected in the next
-                      // release.
+            // release.
             while (i < args.length) {
                 list_agentNames.add((String) args[i]);
                 i++;
@@ -105,7 +109,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     /* 0 name of the agent, 1 his position */
     public void addBusyNeighbors(ACLMessage cur) {
-        System.out.println(cur.getSender().getName());
+//        System.out.println(cur.getSender().getName());
         ArrayList<String> l = new ArrayList<String>();
         l.add(cur.getSender().getName());
         l.add(cur.getContent());
@@ -139,7 +143,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     public Integer getNbAgent() {
         return this.nbAgent;
     }
-    
+
     public boolean isBlocked() {
         if (past_position.size() >= 5) {
             for (int i = past_position.size() - 5; i < past_position.size() - 1; ++i) {
@@ -153,5 +157,51 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         } else {
             return false;
         }
+    }
+
+    public void increaseStep() {
+        this.totalStep += 1;
+    }
+
+    public int getCurrentStep() {
+        return this.totalStep;
+    }
+
+    public AgentState getCurrentAgentState() {
+        return this.agentState;
+    }
+
+    public void setAgentState(AgentState agentState) {
+        this.agentState = agentState;
+    }
+
+    public HashMap<String, Treasure> getTreasuresMap() {
+        return this.treasuresMap;
+    }
+
+    public void addTreasure(String location, Treasure treasure) {
+        if (this.treasuresMap.containsKey(location)) {
+            Treasure t = this.treasuresMap.get(location);
+            if (treasure.getFoundedDate() > t.getFoundedDate()) { // If new treasure is founded later
+                this.treasuresMap.put(location, treasure);
+            }
+        } else {
+            this.treasuresMap.put(location, treasure);
+        }
+    }
+
+    public void mergeTreasuresMap(HashMap<String, Treasure> tm) {
+        System.out.println("before merge :" + this.treasuresMap + "\n" + tm);
+        for (Map.Entry<String, Treasure> entry: tm.entrySet()) {
+            if (! this.treasuresMap.containsKey(entry.getKey())) {
+                this.treasuresMap.put(entry.getKey(), entry.getValue());
+            } else {
+                Treasure t = this.treasuresMap.get(entry.getKey());
+                if (entry.getValue().getFoundedDate() > t.getFoundedDate()) {
+                    this.treasuresMap.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        System.out.println("after merge :" + this.treasuresMap);
     }
 }

@@ -70,7 +70,6 @@ public class InterBlockedBehaviour extends OneShotBehaviour {
                     }
                 }
             }
-
         }
 
         // to finish we select the first move as the next move
