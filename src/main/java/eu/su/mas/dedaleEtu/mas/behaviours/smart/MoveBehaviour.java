@@ -11,6 +11,7 @@ import jade.core.behaviours.OneShotBehaviour;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 public class MoveBehaviour extends OneShotBehaviour {
 
@@ -35,9 +36,25 @@ public class MoveBehaviour extends OneShotBehaviour {
         	((ExploreFSMAgent)this.myAgent).addPastPosition(myPosition);
         	
         	if (((ExploreFSMAgent)this.myAgent).isBlocked()) {
-//        		System.out.println(((ExploreFSMAgent)this.myAgent).getPastPosition());
-        		//System.out.println("HAHAHAHAHHAHAHAHAHAHHHHHHHHHHHHHHH");
-        		
+				
+				if (((ExploreFSMAgent)this.myAgent).getNextMove() != null) {
+					((AbstractDedaleAgent) this.myAgent).moveTo(((ExploreFSMAgent)this.myAgent).getNextMove());
+					 
+					/* Move randomly */
+					List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this.myAgent).observe();
+					int index = new Random().nextInt(obs.size());
+					List<String> l = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPath(myPosition, obs.get(index).getLeft());
+					if (l.size() > 0) {
+						index = new Random().nextInt(l.size());
+						String nextNode = l.get(index);
+						((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
+					}
+
+					((ExploreFSMAgent)this.myAgent).setNextMove(null);
+					return;
+				}
+        		//System.out.println(((ExploreFSMAgent)this.myAgent).getPastPosition());
+				
         		this.exitValue = 1;
         		
         	} else {
@@ -120,6 +137,7 @@ public class MoveBehaviour extends OneShotBehaviour {
 	            }
 	
 	            if (nextNode == null) {
+					//This returns some errors sometimes
 	                nextNode = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
 	                ((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
 					((ExploreFSMAgent)this.myAgent).increaseStep();
