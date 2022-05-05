@@ -27,7 +27,8 @@ public class MoveBehaviour extends OneShotBehaviour {
     @Override
     public void action() {
 
-		System.out.println(((ExploreFSMAgent)this.myAgent).getPastPosition());
+		this.exitValue = 0;
+
         if (((ExploreFSMAgent)this.myAgent).myMap == null)
             ((ExploreFSMAgent)this.myAgent).myMap = new MapRepresentation();
 

@@ -212,8 +212,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 //        System.out.println((this.agentInfo.size() == this.nbAgent));
 //        System.out.println((this.totalStep - this.lastMapUpdateDate > 20));
 //        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 25));
-        if ((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastMapUpdateDate > 20) &&
-                (this.totalStep - this.lastTreasureUpdateDate > 25)) {
+        if ((! this.myMap.hasOpenNode()) || ((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastMapUpdateDate > 20) && (this.totalStep - this.lastTreasureUpdateDate > 25))) {
             this.setAgentState(AgentState.COLLECT);
             System.out.println("############################################################");
             System.out.println(this.getLocalName() + " passes to COLLECT");
@@ -248,7 +247,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     public void addTreasure(String location, Treasure treasure) {
         if (this.treasuresMap.containsKey(location)) {
             Treasure t = this.treasuresMap.get(location);
-            if (treasure.getLastModifiedDate() > t.getLastModifiedDate()) { // If new treasure is founded later
+            if (!treasure.equals(t)) { // If new treasure is founded later
                 this.treasuresMap.put(location, treasure);
                 this.treasureMapUpdated = true;
                 this.lastTreasureUpdateDate = this.totalStep;
@@ -330,8 +329,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     public void mergeAgentInfo(HashMap<String, AgentInfo> infos) {
         if (! this.agentInfo.equals(infos)) {
             HashMap<String, AgentInfo> tmp = (HashMap<String, AgentInfo>) this.agentInfo.clone();
-            System.out.println(this.getLocalName());
-            System.out.println("before merge :" + this.agentInfo);
+//            System.out.println(this.getLocalName());
+//            System.out.println("before merge :" + this.agentInfo);
             for (Map.Entry<String, AgentInfo> entry : infos.entrySet()) {
                 if (!this.agentInfo.containsKey(entry.getKey())) {
                     this.agentInfo.put(entry.getKey(), entry.getValue());
@@ -344,7 +343,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
                     }
                 }
             }
-            System.out.println("after merge :" + this.agentInfo);
+//            System.out.println("after merge :" + this.agentInfo);
             this.agentInfoUpdated = !this.agentInfo.equals(tmp);
             this.lastAgentInfoUpdateDate = this.agentInfoUpdated?this.totalStep:this.lastAgentInfoUpdateDate;
         }
@@ -357,9 +356,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private HashMap<Integer, List<Treasure>> kMeans(List<Treasure> treasureList, List<String> agentList, int nbClass) {
         HashMap<Integer, List<Treasure>> target = new HashMap<>();
         System.out.println(treasureList);
-        for (String name: agentList) {
-            System.out.println(this.agentInfo.get(name));
-        }
+        System.out.println(agentList);
         return target;
     }
 
@@ -393,7 +390,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
             agentList.add(info);
         }
 
-        while (nbRequiredForDiamond > 0 && nbRequiredForGold > 0) {
+        while (nbRequiredForDiamond > 0 || nbRequiredForGold > 0) {
             AgentInfo ag;
             if (sumOfGold > sumOfDiamond) { // If sum of gold is higher
                 // Find the agent who has the highest capacity of gold
