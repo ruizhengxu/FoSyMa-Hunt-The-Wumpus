@@ -390,6 +390,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
             agentList.add(info);
         }
 
+        System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, objValue, nbRequiredForGold, nbRequiredForDiamond);
+
         while (nbRequiredForDiamond > 0 || nbRequiredForGold > 0) {
             AgentInfo ag;
             if (sumOfGold > sumOfDiamond) { // If sum of gold is higher
@@ -409,7 +411,6 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
         HashMap<Integer, List<Treasure>> goldStrategy = this.kMeans(goldList, goldAgentList, nbRequiredForGold);
         HashMap<Integer, List<Treasure>> diamondStrategy = this.kMeans(diamondList, diamondAgentList, nbRequiredForGold);
-        System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, objValue, nbRequiredForGold, nbRequiredForDiamond);
     }
 
     private AgentInfo getAgentWithHighestCapOfGold(List<AgentInfo> agentList) {
