@@ -1,1 +1,1 @@
-http://Noki:7778/acc
+http://macbook-pro-18:7778/acc

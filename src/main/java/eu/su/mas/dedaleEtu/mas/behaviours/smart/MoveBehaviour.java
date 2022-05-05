@@ -7,6 +7,7 @@ import eu.su.mas.dedaleEtu.mas.agents.smart.ExploreFSMAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentState;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
+import eu.su.mas.dedaleEtu.mas.knowledge.smart.TreasureState;
 import jade.core.behaviours.OneShotBehaviour;
 
 import java.util.Iterator;
@@ -78,22 +79,30 @@ public class MoveBehaviour extends OneShotBehaviour {
 	            for(Couple<Observation,Integer> o:lObservations){
 	                switch (o.getLeft()) {
 	                    case DIAMOND:case GOLD:
-	                        System.out.println(Observation.DIAMOND);
 	                        System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+(((ExploreFSMAgent)this.myAgent).getTreasureType()));
 	                        System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
 	                        System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
+							///////////////////
+							// IN STATE EXPLORE
+							///////////////////
 							if (((ExploreFSMAgent)this.myAgent).getCurrentAgentState().equals(AgentState.EXPLORE)) {
-								Treasure t = new Treasure(o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep());
+								Treasure t = new Treasure(o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.FOUND);
 								((ExploreFSMAgent)this.myAgent).addTreasure(myPosition, t);
-								System.out.println(((ExploreFSMAgent)this.myAgent).getTreasuresMap());
+							///////////////////
+							// IN STATE COLLECT
+							///////////////////
 							} else if (((ExploreFSMAgent)this.myAgent).getCurrentAgentState().equals(AgentState.COLLECT)) {
 								if (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.ANY_TREASURE)) {
 									((ExploreFSMAgent)this.myAgent).setTreasureType(o.getLeft());
 									System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(Observation.ANY_TREASURE));
-									System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + ((AbstractDedaleAgent) this.myAgent).pick());
+									int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
+									System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
+									((ExploreFSMAgent)this.myAgent).pickedTreasure(myPosition, pickedQuantity);
 								} else if (((ExploreFSMAgent)this.myAgent).getTreasureType() == o.getLeft()) {
 									System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(((ExploreFSMAgent)this.myAgent).getTreasureType()));
-									System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + ((AbstractDedaleAgent) this.myAgent).pick());
+									int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
+									System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
+									((ExploreFSMAgent)this.myAgent).pickedTreasure(myPosition, pickedQuantity);
 								} else {
 									System.out.println(this.myAgent.getLocalName() + " - I can't pick up this treasure");
 								}
@@ -101,7 +110,13 @@ public class MoveBehaviour extends OneShotBehaviour {
 								b=true;
 							}
 	                        break;
-	                    default:
+	                    default: // If there is nothing in my position
+							if (((ExploreFSMAgent)this.myAgent).getTreasuresMap().containsKey(myPosition)) {// If the current position is in my treasure map so I need to remove it
+								Treasure t = ((ExploreFSMAgent)this.myAgent).getTreasuresMap().get(myPosition);
+								if (t.getState().equals(TreasureState.FOUND)) {
+									((ExploreFSMAgent) this.myAgent).missTreasure(myPosition);
+								}
+							}
 	                        break;
 	                }
 	            }

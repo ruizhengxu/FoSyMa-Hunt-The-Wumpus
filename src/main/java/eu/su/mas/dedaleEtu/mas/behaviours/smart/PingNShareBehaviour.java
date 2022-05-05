@@ -3,6 +3,7 @@ package eu.su.mas.dedaleEtu.mas.behaviours.smart;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.smart.ExploreFSMAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentInfo;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
 import jade.core.AID;
@@ -52,47 +53,62 @@ public class PingNShareBehaviour extends OneShotBehaviour {
         System.out.println(this.myAgent.getLocalName() + " sending message..");
         ((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 
+        //////////////////////////////////////////////////////////////////////////////////////////
         // Check mailbox
         MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
         ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 
         if (msgReceived !=  null) {
-            // If received ping message
-            if (msgReceived.getProtocol().equals("SHARE-PING")) {
-                this.shareMap(msgReceived.getSender());
-                if (((ExploreFSMAgent)this.myAgent).getTreasuresMap().size()>0)
-                    this.shareTreasuresMap(msgReceived.getSender());
-                System.out.println(this.myAgent.getLocalName() + " share his knowledge");
-            }
-            // If received map
-            else if (msgReceived.getProtocol().equals("SHARE-MAP")) {
-                SerializableSimpleGraph<String, MapRepresentation.MapAttribute> receivedMap = null;
-                try {
-                    receivedMap = (SerializableSimpleGraph<String, MapRepresentation.MapAttribute>)msgReceived.getContentObject();
-                } catch (UnreadableException e) {
-                    e.printStackTrace();
-                }
-                ((ExploreFSMAgent)this.myAgent).myMap.mergeMap(receivedMap);
-                System.out.println("Map Merged");
-            }
-            else if (msgReceived.getProtocol().equals("SHARE-TREASURE")) {
-                HashMap<String, Treasure> receivedTreasuresMap = null;
-                try {
-                    receivedTreasuresMap = (HashMap<String, Treasure>) msgReceived.getContentObject();
-                } catch (UnreadableException e) {
-                    e.printStackTrace();
-                }
-                ((ExploreFSMAgent)this.myAgent).mergeTreasuresMap(receivedTreasuresMap);
-                System.out.println("Treasures Map Merged");
-            }
-            else if (msgReceived.getProtocol().equals("SHARE-PAST-POSITION")) {
-            	List<String> receivedPastPos = null;
-                try {
-                	receivedPastPos = (List<String>) msgReceived.getContentObject();
-                } catch (UnreadableException e) {
-                    e.printStackTrace();
-                }
-                // DO SOME STUFF
+            switch (msgReceived.getProtocol()) {
+                case "SHARE-PING":
+                    // Share map
+                    this.shareMap(msgReceived.getSender());
+                    // Share treasure map
+                    if (((ExploreFSMAgent) this.myAgent).getTreasuresMap().size() > 0 && ((ExploreFSMAgent)this.myAgent).isTreasureMapUpdated())
+                        this.shareTreasuresMap(msgReceived.getSender());
+                    // Share agent info
+                    if (((ExploreFSMAgent)this.myAgent).isAgentInfoUpdated())
+                        this.shareAgentInfo(msgReceived.getSender());
+                    System.out.println(this.myAgent.getLocalName() + " share his knowledge");
+                    break;
+                case "SHARE-MAP":
+                    SerializableSimpleGraph<String, MapRepresentation.MapAttribute> receivedMap = null;
+                    try {
+                        receivedMap = (SerializableSimpleGraph<String, MapRepresentation.MapAttribute>) msgReceived.getContentObject();
+                    } catch (UnreadableException e) {
+                        e.printStackTrace();
+                    }
+                    ((ExploreFSMAgent) this.myAgent).myMap.mergeMap(receivedMap);
+                    break;
+                case "SHARE-TREASURE":
+                    HashMap<String, Treasure> receivedTreasuresMap = null;
+                    try {
+                        receivedTreasuresMap = (HashMap<String, Treasure>) msgReceived.getContentObject();
+                    } catch (UnreadableException e) {
+                        e.printStackTrace();
+                    }
+                    ((ExploreFSMAgent) this.myAgent).mergeTreasuresMap(receivedTreasuresMap);
+                    break;
+                case "SHARE-AGENT-INFO":
+                    HashMap<String, AgentInfo> receivedAgentInfo = null;
+                    try {
+                        receivedAgentInfo = (HashMap<String, AgentInfo>) msgReceived.getContentObject();
+                    } catch (UnreadableException e) {
+                        e.printStackTrace();
+                    }
+                    ((ExploreFSMAgent) this.myAgent).mergeAgentInfo(receivedAgentInfo);
+                    break;
+                case "SHARE-PAST-POSITION":
+                    List<String> receivedPastPos = null;
+                    try {
+                        receivedPastPos = (List<String>) msgReceived.getContentObject();
+                    } catch (UnreadableException e) {
+                        e.printStackTrace();
+                    }
+                    // DO SOME STUFF
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -130,6 +146,21 @@ public class PingNShareBehaviour extends OneShotBehaviour {
             e.printStackTrace();
         }
         ((AbstractDedaleAgent)this.myAgent).sendMessage(treasureMapMsg);
+    }
+
+    private void shareAgentInfo(AID sender) {
+        ACLMessage agentInfoMsg = new ACLMessage(ACLMessage.INFORM);
+        agentInfoMsg.setProtocol("SHARE-AGENT-INFO");
+        agentInfoMsg.setSender(this.myAgent.getAID());
+        agentInfoMsg.addReceiver(sender);
+
+        HashMap<String, AgentInfo> infos = ((ExploreFSMAgent)this.myAgent).getAgentInfo();
+        try {
+            agentInfoMsg.setContentObject(infos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ((AbstractDedaleAgent)this.myAgent).sendMessage(agentInfoMsg);
     }
     
     //Only send a message if it is blocked

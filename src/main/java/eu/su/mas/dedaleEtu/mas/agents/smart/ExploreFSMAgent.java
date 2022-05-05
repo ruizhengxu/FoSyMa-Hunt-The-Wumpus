@@ -1,13 +1,12 @@
 package eu.su.mas.dedaleEtu.mas.agents.smart;
 
+import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.smart.*;
-import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentState;
-import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
-import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
+import eu.su.mas.dedaleEtu.mas.knowledge.smart.*;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.FSMBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -20,7 +19,10 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     public MapRepresentation myMap;
     private Observation treasureType;
     private AgentState agentState;
+    private boolean treasureMapUpdated;
+    private boolean agentInfoUpdated;
     private HashMap<String, Treasure> treasuresMap = new HashMap<>();
+    private HashMap<String, AgentInfo> agentInfo = new HashMap<>();
     private int totalStep;
 
     // State names
@@ -43,13 +45,17 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     protected void setup() {
         super.setup();
 
-        this.treasureType = Observation.ANY_TREASURE;
-        this.agentState = AgentState.EXPLORE;
-        this.totalStep = 0;
-
         final Object[] args = getArguments();
         List<String> receivers = this.getReceivers(args);
         this.nbAgent = receivers.size();
+        this.treasureType = Observation.ANY_TREASURE;
+        this.agentState = AgentState.EXPLORE;
+        this.totalStep = 0;
+        List<Couple<Observation, Integer>> backpackCapacity = this.getBackPackFreeSpace(); // [<Gold, x>, <Diamond, y>]
+        AgentInfo info = new AgentInfo(this.getLocalName(), receivers.indexOf(this.getLocalName()), 0, 0, backpackCapacity.get(0).getRight(), backpackCapacity.get(1).getRight(), this.totalStep);
+        this.agentInfo.put(this.getLocalName(), info);
+        this.treasureMapUpdated = true;
+        this.agentInfoUpdated = true;
 
         FSMBehaviour fsm = new FSMBehaviour(this);
         fsm.registerFirstState(new PingNShareBehaviour(this, receivers), A);
@@ -175,6 +181,10 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         this.agentState = agentState;
     }
 
+    public boolean isTreasureMapUpdated() {
+        return this.treasureMapUpdated;
+    }
+
     public HashMap<String, Treasure> getTreasuresMap() {
         return this.treasuresMap;
     }
@@ -182,26 +192,99 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     public void addTreasure(String location, Treasure treasure) {
         if (this.treasuresMap.containsKey(location)) {
             Treasure t = this.treasuresMap.get(location);
-            if (treasure.getFoundedDate() > t.getFoundedDate()) { // If new treasure is founded later
+            if (treasure.getLastModifiedDate() > t.getLastModifiedDate()) { // If new treasure is founded later
                 this.treasuresMap.put(location, treasure);
+                this.treasureMapUpdated = true;
             }
         } else {
             this.treasuresMap.put(location, treasure);
+            this.treasureMapUpdated = true;
         }
     }
 
+    public void pickedTreasure(String location, int pickedValue) {
+        Treasure t = this.treasuresMap.get(location);
+        if (pickedValue == t.getValue()) {
+            t.setValue(0);
+            t.setState(TreasureState.PICKED);
+        } else {
+            t.setValue(t.getValue()-pickedValue);
+        }
+        t.setLastModifiedDate(this.totalStep);
+        this.treasuresMap.put(location, t);
+        this.treasureMapUpdated = true;
+        this.updateMyInfo(t.getType(), pickedValue);
+    }
+
+    public void missTreasure(String location) {
+        Treasure t = this.treasuresMap.get(location);
+        t.setState(TreasureState.MISSING);
+        t.setLastModifiedDate(this.totalStep);
+        this.treasuresMap.put(location, t);
+        this.treasureMapUpdated = true;
+    }
+
     public void mergeTreasuresMap(HashMap<String, Treasure> tm) {
-        System.out.println("before merge :" + this.treasuresMap + "\n" + tm);
-        for (Map.Entry<String, Treasure> entry: tm.entrySet()) {
-            if (! this.treasuresMap.containsKey(entry.getKey())) {
-                this.treasuresMap.put(entry.getKey(), entry.getValue());
-            } else {
-                Treasure t = this.treasuresMap.get(entry.getKey());
-                if (entry.getValue().getFoundedDate() > t.getFoundedDate()) {
+        if (! this.treasuresMap.equals(tm)) {
+            HashMap<String, Treasure> tmp = (HashMap<String, Treasure>) this.treasuresMap.clone();
+            System.out.println("before merge :" + this.treasuresMap + " U " + tm);
+            for (Map.Entry<String, Treasure> entry : tm.entrySet()) {
+                // If it is a new treasure
+                if (!this.treasuresMap.containsKey(entry.getKey())) {
                     this.treasuresMap.put(entry.getKey(), entry.getValue());
+                } else {
+                    Treasure t = this.treasuresMap.get(entry.getKey());
+                    if (! t.getState().equals(entry.getValue().getState())) {
+                        if (entry.getValue().getState().equals(TreasureState.PICKED)) {
+                            this.treasuresMap.put(entry.getKey(), entry.getValue());
+                        }
+                    } else if (entry.getValue().getLastModifiedDate() > t.getLastModifiedDate()) {
+                        this.treasuresMap.put(entry.getKey(), entry.getValue());
+                    }
                 }
             }
+            System.out.println("after merge :" + this.treasuresMap);
+            this.treasureMapUpdated = this.treasuresMap.equals(tmp);
         }
-        System.out.println("after merge :" + this.treasuresMap);
+    }
+
+    public HashMap<String, AgentInfo> getAgentInfo() {
+        return this.agentInfo;
+    }
+
+    private void updateMyInfo(Observation type, int value) {
+        AgentInfo me = this.agentInfo.get(this.getLocalName());
+        if (type.equals(Observation.GOLD)) {
+            me.setGoldValue(me.getGoldValue()+value);
+        } else if (type.equals(Observation.DIAMOND)) {
+            me.setDiamondValue(me.getDiamondValue()+value);
+        }
+        this.agentInfo.put(this.getLocalName(), me);
+        this.agentInfoUpdated = true;
+    }
+
+    public void mergeAgentInfo(HashMap<String, AgentInfo> infos) {
+        if (! this.agentInfo.equals(infos)) {
+            HashMap<String, AgentInfo> tmp = (HashMap<String, AgentInfo>) this.agentInfo.clone();
+            System.out.println("before merge :" + this.agentInfo + " U " + infos);
+            for (Map.Entry<String, AgentInfo> entry : infos.entrySet()) {
+                if (!this.agentInfo.containsKey(entry.getKey())) {
+                    this.agentInfo.put(entry.getKey(), entry.getValue());
+                } else {
+                    if (!entry.getKey().equals(this.getLocalName())) {
+                        AgentInfo info = this.agentInfo.get(entry.getKey());
+                        if (entry.getValue().getLastModifiedDate() > info.getLastModifiedDate()) {
+                            this.agentInfo.put(entry.getKey(), entry.getValue());
+                        }
+                    }
+                }
+            }
+            System.out.println("after merge :" + this.agentInfo);
+            this.agentInfoUpdated = this.agentInfo.equals(tmp);
+        }
+    }
+
+    public boolean isAgentInfoUpdated() {
+        return this.agentInfoUpdated;
     }
 }
