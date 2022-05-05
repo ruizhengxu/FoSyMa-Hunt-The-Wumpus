@@ -30,6 +30,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private HashMap<String, Treasure> treasuresMap = new HashMap<>();
     private HashMap<String, AgentInfo> agentInfo = new HashMap<>();
     private int totalStep;
+    private int messageSend;
 
     // State names
     private static final String A = "A";
@@ -58,6 +59,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         this.treasureType = Observation.ANY_TREASURE;
         this.agentState = AgentState.EXPLORE;
         this.totalStep = 0;
+        this.messageSend = 0;
         List<Couple<Observation, Integer>> backpackCapacity = this.getBackPackFreeSpace(); // [<Gold, x>, <Diamond, y>]
         AgentInfo info = new AgentInfo(this.getLocalName(), receivers.indexOf(this.getLocalName()), 0, 0, backpackCapacity.get(0).getRight(), backpackCapacity.get(1).getRight(), this.totalStep);
         this.agentInfo.put(this.getLocalName(), info);
@@ -189,6 +191,14 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         return this.totalStep;
     }
 
+    public int getMessageSend() {
+        return messageSend;
+    }
+
+    public void increaseMessageCount() {
+        this.messageSend += 1;
+    }
+
     public AgentState getCurrentAgentState() {
         return this.agentState;
     }
@@ -198,15 +208,17 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     }
 
     public boolean switchToCollect() {
-//        System.out.printf("%s - AgentSize : %d, TotalStep : %d, lastMap : %d, lastTre : %d, lastAg : %d\n", this.getLocalName(), this.agentInfo.size(), this.totalStep, this.lastMapUpdateDate, this.lastTreasureUpdateDate, this.lastAgentInfoUpdateDate);
+        System.out.printf("%s - AgentSize : %d, TotalStep : %d, lastMap : %d, lastTre : %d, lastAg : %d, openNodes : %d\n", this.getLocalName(), this.agentInfo.size(), this.totalStep, this.lastMapUpdateDate, this.lastTreasureUpdateDate, this.lastAgentInfoUpdateDate, this.myMap.getOpenNodes().size());
 //        System.out.println((this.agentInfo.size() == this.nbAgent));
-//        System.out.println((this.totalStep - this.lastMapUpdateDate > 0));
-//        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 15));
-        if ((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastMapUpdateDate > 10) &&
-                (this.totalStep - this.lastTreasureUpdateDate > 15)) {
+//        System.out.println((this.totalStep - this.lastMapUpdateDate > 20));
+//        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 25));
+        if ((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastMapUpdateDate > 20) &&
+                (this.totalStep - this.lastTreasureUpdateDate > 25)) {
             this.setAgentState(AgentState.COLLECT);
             System.out.println("############################################################");
             System.out.println(this.getLocalName() + " passes to COLLECT");
+            System.out.println(this.getLocalName() + this.treasuresMap);
+            System.out.println(this.getLocalName() + this.agentInfo);
             System.out.println("############################################################");
             this.generateStrategy();
             return true;
@@ -275,8 +287,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     public void mergeTreasuresMap(HashMap<String, Treasure> tm) {
         if (! this.treasuresMap.equals(tm)) {
             HashMap<String, Treasure> tmp = (HashMap<String, Treasure>) this.treasuresMap.clone();
-            System.out.println(this.getLocalName());
-            System.out.println("before merge :" + this.treasuresMap);
+//            System.out.println(this.getLocalName());
+//            System.out.println("before merge :" + this.treasuresMap);
             for (Map.Entry<String, Treasure> entry : tm.entrySet()) {
                 // If it is a new treasure
                 if (!this.treasuresMap.containsKey(entry.getKey())) {
@@ -292,7 +304,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
                     }
                 }
             }
-            System.out.println("after merge :" + this.treasuresMap);
+//            System.out.println("after merge :" + this.treasuresMap);
             this.treasureMapUpdated = !this.treasuresMap.equals(tmp);
             this.lastTreasureUpdateDate = this.treasureMapUpdated?this.totalStep:this.lastTreasureUpdateDate;
         }
@@ -345,12 +357,13 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private HashMap<Integer, List<Treasure>> kMeans(List<Treasure> treasureList, List<String> agentList, int nbClass) {
         HashMap<Integer, List<Treasure>> target = new HashMap<>();
         System.out.println(treasureList);
-        System.out.println(agentList);
+        for (String name: agentList) {
+            System.out.println(this.agentInfo.get(name));
+        }
         return target;
     }
 
     private void generateStrategy() {
-        System.out.println(this.treasuresMap);
         int sumOfGold = 0;
         int sumOfDiamond = 0;
         List<String> goldAgentList = new ArrayList<>();
@@ -372,8 +385,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         Collections.sort(goldList);
         Collections.sort(diamondList);
         int objValue = (sumOfGold+sumOfDiamond)/this.nbAgent; // Objective value of each agent
-        int nbRequiredForDiamond = (int)Math.ceil((double)sumOfDiamond/objValue); // Number of agent to collect diamond
-        int nbRequiredForGold = this.nbAgent-nbRequiredForDiamond; // Number of agent to collect gold
+        int nbRequiredForDiamond = Math.min((int)Math.ceil((double)sumOfDiamond/objValue), diamondList.size()); // Number of agent to collect diamond
+        int nbRequiredForGold = Math.min(this.nbAgent-nbRequiredForDiamond, goldList.size()); // Number of agent to collect gold
 
         List<AgentInfo> agentList = new ArrayList<>();
         for (AgentInfo info: this.agentInfo.values()) {
@@ -381,14 +394,44 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         }
 
         while (nbRequiredForDiamond > 0 && nbRequiredForGold > 0) {
+            AgentInfo ag;
             if (sumOfGold > sumOfDiamond) { // If sum of gold is higher
                 // Find the agent who has the highest capacity of gold
-                
+                ag = getAgentWithHighestCapOfGold(agentList);
+                goldAgentList.add(ag.getName());
+                sumOfGold -= ag.getGoldCapacity();
+                nbRequiredForGold -= 1;
+            } else {
+                ag = getAgentWithHighestCapOfDiamond(agentList);
+                diamondAgentList.add(ag.getName());
+                sumOfGold -= ag.getDiamondCapacity();
+                nbRequiredForDiamond -= 1;
             }
+            agentList.remove(ag);
         }
 
         HashMap<Integer, List<Treasure>> goldStrategy = this.kMeans(goldList, goldAgentList, nbRequiredForGold);
         HashMap<Integer, List<Treasure>> diamondStrategy = this.kMeans(diamondList, diamondAgentList, nbRequiredForGold);
         System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, objValue, nbRequiredForGold, nbRequiredForDiamond);
+    }
+
+    private AgentInfo getAgentWithHighestCapOfGold(List<AgentInfo> agentList) {
+        AgentInfo ag = null;
+        for (AgentInfo ag_ : agentList) {
+            if (ag == null || ag.getGoldCapacity() < ag_.getGoldCapacity()) {
+                ag = ag_;
+            }
+        }
+        return ag;
+    }
+
+    private AgentInfo getAgentWithHighestCapOfDiamond(List<AgentInfo> agentList) {
+        AgentInfo ag = null;
+        for (AgentInfo ag_ : agentList) {
+            if (ag == null || ag.getDiamondCapacity() < ag_.getDiamondCapacity()) {
+                ag = ag_;
+            }
+        }
+        return ag;
     }
 }

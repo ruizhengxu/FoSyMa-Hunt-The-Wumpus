@@ -36,83 +36,33 @@ public class PingNShareBehaviour extends OneShotBehaviour {
             ((ExploreFSMAgent)this.myAgent).myMap = new MapRepresentation();
 
         // Send message ping
-        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-        msg.setSender(this.myAgent.getAID());
-        // Add message's receivers
-        for (String receiver : this.receivers) {
-            if (! (this.myAgent.getLocalName().equals(receiver))) {
-                msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
+        if (((ExploreFSMAgent)this.myAgent).getMessageSend()<((ExploreFSMAgent) this.myAgent).getCurrentStep()) {
+            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+            msg.setSender(this.myAgent.getAID());
+            // Add message's receivers
+            for (String receiver : this.receivers) {
+                if (!(this.myAgent.getLocalName().equals(receiver))) {
+                    msg.addReceiver(new AID(receiver, AID.ISLOCALNAME));
+                }
             }
+            msg.setProtocol("SHARE-PING");
+
+            if (((ExploreFSMAgent) this.myAgent).isBlocked())
+                msg.setContent(STATE_BLOCKED);
+            else
+                msg.setContent("Hi");
+
+            //        System.out.println(this.myAgent.getLocalName() + " sending message..");
+            ((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
+            ((ExploreFSMAgent)this.myAgent).increaseMessageCount();
         }
-        msg.setProtocol("SHARE-PING");
-        
-        if(((ExploreFSMAgent)this.myAgent).isBlocked())
-        	msg.setContent(STATE_BLOCKED);
-        else
-        	msg.setContent("Hi");
-        
-        System.out.println(this.myAgent.getLocalName() + " sending message..");
-        ((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // Check mailbox
-        MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
-        ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-
-        if (msgReceived !=  null) {
-            switch (msgReceived.getProtocol()) {
-                case "SHARE-PING":
-                    // Share map
-                    this.shareMap(msgReceived.getSender());
-                    // Share treasure map
-                    if (((ExploreFSMAgent) this.myAgent).getTreasuresMap().size() > 0 && ((ExploreFSMAgent)this.myAgent).isTreasureMapUpdated())
-                        this.shareTreasuresMap(msgReceived.getSender());
-                    // Share agent info
-                    if (((ExploreFSMAgent)this.myAgent).isAgentInfoUpdated())
-                        this.shareAgentInfo(msgReceived.getSender());
-                    System.out.println(this.myAgent.getLocalName() + " share his knowledge");
-                    break;
-                case "SHARE-MAP":
-                    SerializableSimpleGraph<String, MapRepresentation.MapAttribute> receivedMap = null;
-                    try {
-                        receivedMap = (SerializableSimpleGraph<String, MapRepresentation.MapAttribute>) msgReceived.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
-                    }
-                    ((ExploreFSMAgent) this.myAgent).mergeMap(receivedMap);
-                    break;
-                case "SHARE-TREASURE":
-                    HashMap<String, Treasure> receivedTreasuresMap = null;
-                    try {
-                        receivedTreasuresMap = (HashMap<String, Treasure>) msgReceived.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
-                    }
-                    ((ExploreFSMAgent) this.myAgent).mergeTreasuresMap(receivedTreasuresMap);
-                    break;
-                case "SHARE-AGENT-INFO":
-                    HashMap<String, AgentInfo> receivedAgentInfo = null;
-                    try {
-                        receivedAgentInfo = (HashMap<String, AgentInfo>) msgReceived.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
-                    }
-                    ((ExploreFSMAgent) this.myAgent).mergeAgentInfo(receivedAgentInfo);
-                    break;
-                case "SHARE-PAST-POSITION":
-                    List<String> receivedPastPos = null;
-                    try {
-                        receivedPastPos = (List<String>) msgReceived.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
-                    }
-                    // DO SOME STUFF
-                    break;
-                default:
-                    break;
-            }
-        }
-
+        this.checkPing();
+        this.checkShareMap();
+        this.checkShareTreasure();
+        this.checkShareAgentInfo();
 
         if (((ExploreFSMAgent) this.myAgent).getCurrentAgentState().equals(AgentState.COLLECT))
             this.exitValue = 1;
@@ -121,6 +71,76 @@ public class PingNShareBehaviour extends OneShotBehaviour {
     @Override
     public int onEnd() {
         return this.exitValue;
+    }
+
+    private void checkPing() {
+        MessageTemplate msgTemplate=MessageTemplate.and(
+                MessageTemplate.MatchProtocol("SHARE-PING"),
+                MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+        ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
+
+        if (msgReceived !=  null) {
+            // Share map
+            this.shareMap(msgReceived.getSender());
+            // Share treasure map
+            if (((ExploreFSMAgent) this.myAgent).getTreasuresMap().size() > 0 && ((ExploreFSMAgent)this.myAgent).isTreasureMapUpdated())
+                this.shareTreasuresMap(msgReceived.getSender());
+            // Share agent info
+            if (((ExploreFSMAgent)this.myAgent).isAgentInfoUpdated())
+                this.shareAgentInfo(msgReceived.getSender());
+//                System.out.println(this.myAgent.getLocalName() + " share his knowledge");
+        }
+    }
+
+    private void checkShareMap() {
+        MessageTemplate msgTemplate=MessageTemplate.and(
+                MessageTemplate.MatchProtocol("SHARE-MAP"),
+                MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+        ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
+
+        if (msgReceived !=  null) {
+            SerializableSimpleGraph<String, MapRepresentation.MapAttribute> receivedMap = null;
+            try {
+                receivedMap = (SerializableSimpleGraph<String, MapRepresentation.MapAttribute>) msgReceived.getContentObject();
+            } catch (UnreadableException e) {
+                e.printStackTrace();
+            }
+            ((ExploreFSMAgent) this.myAgent).mergeMap(receivedMap);
+        }
+    }
+
+    private void checkShareTreasure() {
+        MessageTemplate msgTemplate=MessageTemplate.and(
+                MessageTemplate.MatchProtocol("SHARE-TREASURE"),
+                MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+        ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
+
+        if (msgReceived !=  null) {
+            HashMap<String, Treasure> receivedTreasuresMap = null;
+            try {
+                receivedTreasuresMap = (HashMap<String, Treasure>) msgReceived.getContentObject();
+            } catch (UnreadableException e) {
+                e.printStackTrace();
+            }
+            ((ExploreFSMAgent) this.myAgent).mergeTreasuresMap(receivedTreasuresMap);
+        }
+    }
+
+    private void checkShareAgentInfo() {
+        MessageTemplate msgTemplate=MessageTemplate.and(
+                MessageTemplate.MatchProtocol("SHARE-AGENT-INFO"),
+                MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+        ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
+
+        if (msgReceived !=  null) {
+            HashMap<String, AgentInfo> receivedAgentInfo = null;
+            try {
+                receivedAgentInfo = (HashMap<String, AgentInfo>) msgReceived.getContentObject();
+            } catch (UnreadableException e) {
+                e.printStackTrace();
+            }
+            ((ExploreFSMAgent) this.myAgent).mergeAgentInfo(receivedAgentInfo);
+        }
     }
 
     private void shareMap(AID sender) {

@@ -27,16 +27,17 @@ public class MoveBehaviour extends OneShotBehaviour {
     @Override
     public void action() {
 
+		System.out.println(((ExploreFSMAgent)this.myAgent).getPastPosition());
         if (((ExploreFSMAgent)this.myAgent).myMap == null)
             ((ExploreFSMAgent)this.myAgent).myMap = new MapRepresentation();
 
         String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
         if (myPosition != null) {
-        	
+
         	//Adding past position into agent list
         	((ExploreFSMAgent)this.myAgent).addPastPosition(myPosition);
-        	
+
         	if (((ExploreFSMAgent)this.myAgent).isBlocked()) {
 				//System.out.println("BLOCKED IN MOVE");
 				if (((ExploreFSMAgent)this.myAgent).getNextMove() != null) {
@@ -60,8 +61,7 @@ public class MoveBehaviour extends OneShotBehaviour {
 					((ExploreFSMAgent)this.myAgent).setNextMove(null);
 					return;
 				}
-        		//System.out.println(((ExploreFSMAgent)this.myAgent).getPastPosition());
-				
+
         		this.exitValue = 1;
         		
         	} else {
@@ -85,10 +85,10 @@ public class MoveBehaviour extends OneShotBehaviour {
 	            for(Couple<Observation,Integer> o:lObservations){
 	                switch (o.getLeft()) {
 	                    case DIAMOND:case GOLD:
-							System.out.println(this.myAgent.getLocalName()+" - My current state is : "+(((ExploreFSMAgent)this.myAgent).getCurrentAgentState()));
-	                        System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+(((ExploreFSMAgent)this.myAgent).getTreasureType()));
-	                        System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
-	                        System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
+//							System.out.println(this.myAgent.getLocalName()+" - My current state is : "+(((ExploreFSMAgent)this.myAgent).getCurrentAgentState()));
+//	                        System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+(((ExploreFSMAgent)this.myAgent).getTreasureType()));
+//	                        System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
+//	                        System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
 							///////////////////
 							// IN STATE EXPLORE
 							///////////////////
@@ -159,13 +159,11 @@ public class MoveBehaviour extends OneShotBehaviour {
 	            }
 	
 	            if (nextNode == null) {
-					System.out.println(((ExploreFSMAgent)this.myAgent).myMap.getOpenNodes());
 					if(((ExploreFSMAgent)this.myAgent).myMap.getOpenNodes().size() > 0) {
 						nextNode = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
 						((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
-
 						((ExploreFSMAgent)this.myAgent).increaseStep();
-						System.out.println(this.myAgent.getLocalName() + " want to move to " + nextNode);
+//						System.out.println(this.myAgent.getLocalName() + " want to move to " + nextNode);
 					}
 	            }
 

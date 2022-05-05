@@ -27,7 +27,7 @@ public class InterBlockedBehaviour extends OneShotBehaviour {
 
     @Override
     public void action() {
-        System.out.println("BLOCKED!!!!");
+        System.out.println(myAgent.getLocalName() + " - BLOCKED!!!!");
         messageTool();
 
         // System.out.println(((ExploreFSMAgent) this.myAgent).getBusyNeighbors());
