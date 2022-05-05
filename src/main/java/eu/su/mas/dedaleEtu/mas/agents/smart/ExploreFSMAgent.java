@@ -50,6 +50,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     private Integer time = 100;
     private Integer nbAgent;
+    private ArrayList<Integer> findedOnLastPass = new ArrayList<Integer>();
 
     protected void setup() {
         super.setup();
@@ -505,5 +506,34 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
             }
         }
         return nearestTreasure;
+    }
+
+    public void moveAfterBlocking() {
+        try {
+            this.doWait(((ExploreFSMAgent)this).getTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ((AbstractDedaleAgent) this).moveTo(((ExploreFSMAgent)this).getNextMove());
+        try {
+            this.doWait(((ExploreFSMAgent)this).getTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        /* Move randomly */
+        List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this).observe();
+        int index = new Random().nextInt(obs.size() - 1);
+        String pos = obs.get(index).getLeft();
+        ((AbstractDedaleAgent) this).moveTo(pos);
+
+        ((ExploreFSMAgent)this).setNextMove(null);
+    }
+
+    public ArrayList<Integer> getFindedOnLastPass() {
+        return this.findedOnLastPass;
+    }
+
+    public void addFindedOnLastPass(int i) {
+        this.findedOnLastPass.add(i);
     }
 }

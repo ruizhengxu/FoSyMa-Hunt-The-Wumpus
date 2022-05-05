@@ -16,7 +16,11 @@ import java.util.Random;
 
 public class ExploreBehaviour extends OneShotBehaviour {
 
-    private int exitValue;
+    /**
+	 *
+	 */
+	private static final long serialVersionUID = -4537975631305736934L;
+	private int exitValue;
 
     public ExploreBehaviour(final AbstractDedaleAgent myAgent) {
         super(myAgent);
@@ -41,24 +45,7 @@ public class ExploreBehaviour extends OneShotBehaviour {
         	if (((ExploreFSMAgent)this.myAgent).isBlocked()) {
 				//System.out.println("BLOCKED IN MOVE");
 				if (((ExploreFSMAgent)this.myAgent).getNextMove() != null) {
-					try {
-						this.myAgent.doWait(((ExploreFSMAgent)this.myAgent).getTime());
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					((AbstractDedaleAgent) this.myAgent).moveTo(((ExploreFSMAgent)this.myAgent).getNextMove());
-					try {
-						this.myAgent.doWait(((ExploreFSMAgent)this.myAgent).getTime());
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					/* Move randomly */
-					List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this.myAgent).observe();
-					int index = new Random().nextInt(obs.size() - 1);
-					String pos = obs.get(index).getLeft();
-					((AbstractDedaleAgent) this.myAgent).moveTo(pos);
-					((ExploreFSMAgent)this.myAgent).increaseStep();
-					((ExploreFSMAgent)this.myAgent).setNextMove(null);
+					((ExploreFSMAgent)this.myAgent).moveAfterBlocking();
 					return;
 				}
 
