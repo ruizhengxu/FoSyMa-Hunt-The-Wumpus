@@ -5,9 +5,9 @@ import eu.su.mas.dedale.env.Observation;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Treasure implements Serializable {
+public class Treasure implements Serializable, Comparable<Treasure> {
 
-    private int value;
+    private Integer value;
     private Observation type;
     private int lastModifiedDate;
     private TreasureState state;
@@ -19,11 +19,11 @@ public class Treasure implements Serializable {
         this.state = state;
     }
 
-    public int getValue() {
+    public Integer getValue() {
         return this.value;
     }
 
-    public void setValue(int value) {
+    public void setValue(Integer value) {
         this.value = value;
     }
 
@@ -72,6 +72,11 @@ public class Treasure implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(value, type, state);
+    }
+
+    @Override
+    public int compareTo(Treasure t) {
+        return -(this.getValue().compareTo(t.getValue())); // Order by decreasing
     }
     //    @Override public boolean equals(Object other) {
 //        boolean result = false;

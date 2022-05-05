@@ -26,6 +26,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private int lastMapUpdateDate;
     private int lastTreasureUpdateDate;
     private int lastAgentInfoUpdateDate;
+    private List<String> receivers;
     private HashMap<String, Treasure> treasuresMap = new HashMap<>();
     private HashMap<String, AgentInfo> agentInfo = new HashMap<>();
     private int totalStep;
@@ -52,7 +53,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         super.setup();
 
         final Object[] args = getArguments();
-        List<String> receivers = this.getReceivers(args);
+        this.receivers = this.getReceivers(args);
         this.nbAgent = receivers.size();
         this.treasureType = Observation.ANY_TREASURE;
         this.agentState = AgentState.EXPLORE;
@@ -71,7 +72,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         fsm.registerFirstState(new PingNShareBehaviour(this, receivers), A);
         fsm.registerState(new MoveBehaviour(this), B);
         fsm.registerState(new InterBlockedBehaviour(this, receivers), C);
-        fsm.registerState(new CollectBehaviour(this), D);
+        fsm.registerLastState(new CollectBehaviour(this), D);
         // TRANSITION
         fsm.registerDefaultTransition(A, B);
         fsm.registerDefaultTransition(B, A);
@@ -79,9 +80,9 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         fsm.registerTransition(B, C, 1);
         fsm.registerDefaultTransition(C, B);
         // collect behaviour
-        fsm.registerTransition(B, D, 2);
-        fsm.registerDefaultTransition(D, A);
-        fsm.registerTransition(A, D, 1);
+//        fsm.registerTransition(B, D, 2);
+//        fsm.registerDefaultTransition(D, A);
+//        fsm.registerTransition(A, D, 1);
 
         List<Behaviour> lb = new ArrayList<Behaviour>();
         lb.add(fsm);
@@ -341,25 +342,53 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         return this.agentInfoUpdated;
     }
 
-    private void kMeans(List<Treasure> treasureList, int nbClass) {
+    private HashMap<Integer, List<Treasure>> kMeans(List<Treasure> treasureList, List<String> agentList, int nbClass) {
         HashMap<Integer, List<Treasure>> target = new HashMap<>();
-
+        System.out.println(treasureList);
+        System.out.println(agentList);
+        return target;
     }
 
     private void generateStrategy() {
         System.out.println(this.treasuresMap);
         int sumOfGold = 0;
         int sumOfDiamond = 0;
+        List<String> goldAgentList = new ArrayList<>();
+        List<Treasure> goldList = new ArrayList<>();
+        List<String> diamondAgentList = new ArrayList<>();
+        List<Treasure> diamondList = new ArrayList<>();
+
         for (Treasure t: this.treasuresMap.values()) {
-            if (t.getType().equals(Observation.GOLD)) {
-                sumOfGold += t.getValue();
-            } else {
-                sumOfDiamond += t.getValue();
+            if (t.getState().equals(TreasureState.FOUND)) {
+                if (t.getType().equals(Observation.GOLD)) {
+                    goldList.add(t);
+                    sumOfGold += t.getValue();
+                } else {
+                    diamondList.add(t);
+                    sumOfDiamond += t.getValue();
+                }
             }
         }
+        Collections.sort(goldList);
+        Collections.sort(diamondList);
         int objValue = (sumOfGold+sumOfDiamond)/this.nbAgent; // Objective value of each agent
         int nbRequiredForDiamond = (int)Math.ceil((double)sumOfDiamond/objValue); // Number of agent to collect diamond
         int nbRequiredForGold = this.nbAgent-nbRequiredForDiamond; // Number of agent to collect gold
+
+        List<AgentInfo> agentList = new ArrayList<>();
+        for (AgentInfo info: this.agentInfo.values()) {
+            agentList.add(info);
+        }
+
+        while (nbRequiredForDiamond > 0 && nbRequiredForGold > 0) {
+            if (sumOfGold > sumOfDiamond) { // If sum of gold is higher
+                // Find the agent who has the highest capacity of gold
+                
+            }
+        }
+
+        HashMap<Integer, List<Treasure>> goldStrategy = this.kMeans(goldList, goldAgentList, nbRequiredForGold);
+        HashMap<Integer, List<Treasure>> diamondStrategy = this.kMeans(diamondList, diamondAgentList, nbRequiredForGold);
         System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, objValue, nbRequiredForGold, nbRequiredForDiamond);
     }
 }

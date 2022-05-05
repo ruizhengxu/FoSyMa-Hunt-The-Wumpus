@@ -9,6 +9,7 @@ import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.TreasureState;
 import jade.core.behaviours.OneShotBehaviour;
+import net.sourceforge.plantuml.sequencediagram.teoz.ElseTile;
 
 import java.util.Iterator;
 import java.util.List;
@@ -37,19 +38,24 @@ public class MoveBehaviour extends OneShotBehaviour {
         	((ExploreFSMAgent)this.myAgent).addPastPosition(myPosition);
         	
         	if (((ExploreFSMAgent)this.myAgent).isBlocked()) {
-				
+				//System.out.println("BLOCKED IN MOVE");
 				if (((ExploreFSMAgent)this.myAgent).getNextMove() != null) {
+					try {
+						this.myAgent.doWait(((ExploreFSMAgent)this.myAgent).getTime());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					((AbstractDedaleAgent) this.myAgent).moveTo(((ExploreFSMAgent)this.myAgent).getNextMove());
-					 
+					try {
+						this.myAgent.doWait(((ExploreFSMAgent)this.myAgent).getTime());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					/* Move randomly */
 					List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this.myAgent).observe();
-					int index = new Random().nextInt(obs.size());
-					List<String> l = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPath(myPosition, obs.get(index).getLeft());
-					if (l.size() > 0) {
-						index = new Random().nextInt(l.size());
-						String nextNode = l.get(index);
-						((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
-					}
+					int index = new Random().nextInt(obs.size() - 1);
+					String pos = obs.get(index).getLeft();
+					((AbstractDedaleAgent) this.myAgent).moveTo(pos);
 
 					((ExploreFSMAgent)this.myAgent).setNextMove(null);
 					return;
@@ -64,7 +70,7 @@ public class MoveBehaviour extends OneShotBehaviour {
 	            List<Couple<String, List<Couple<Observation, Integer>>>> lobs = ((AbstractDedaleAgent) this.myAgent).observe();//myPosition
 	
 	            try {
-	                this.myAgent.doWait(1000);
+	                this.myAgent.doWait(((ExploreFSMAgent)this.myAgent).getTime());
 	            } catch (Exception e) {
 	                e.printStackTrace();
 	            }
@@ -153,11 +159,14 @@ public class MoveBehaviour extends OneShotBehaviour {
 	            }
 	
 	            if (nextNode == null) {
-					//This returns some errors sometimes
-	                nextNode = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
-	                ((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
-					((ExploreFSMAgent)this.myAgent).increaseStep();
-	                System.out.println(this.myAgent.getLocalName() + " want to move to " + nextNode);
+					System.out.println(((ExploreFSMAgent)this.myAgent).myMap.getOpenNodes());
+					if(((ExploreFSMAgent)this.myAgent).myMap.getOpenNodes().size() > 0) {
+						nextNode = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPathToClosestOpenNode(myPosition).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
+						((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
+
+						((ExploreFSMAgent)this.myAgent).increaseStep();
+						System.out.println(this.myAgent.getLocalName() + " want to move to " + nextNode);
+					}
 	            }
 
 				if (((ExploreFSMAgent)this.myAgent).getCurrentAgentState().equals(AgentState.EXPLORE)) {

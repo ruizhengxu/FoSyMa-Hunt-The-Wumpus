@@ -7,10 +7,10 @@ public class AgentInfo implements Serializable {
 
     private String name;
     private int id;
-    private int goldValue;
-    private int diamondValue;
-    private int goldCapacity;
-    private int diamondCapacity;
+    private Integer goldValue;
+    private Integer diamondValue;
+    private Integer goldCapacity;
+    private Integer diamondCapacity;
     private int lastModifiedDate;
 
     public AgentInfo(String name, int id, int goldValue, int diamondValue, int goldCapacity, int diamondCapacity, int lastModifiedDate) {
@@ -39,35 +39,35 @@ public class AgentInfo implements Serializable {
         this.id = id;
     }
 
-    public int getGoldValue() {
+    public Integer getGoldValue() {
         return goldValue;
     }
 
-    public void setGoldValue(int goldValue) {
+    public void setGoldValue(Integer goldValue) {
         this.goldValue = goldValue;
     }
 
-    public int getDiamondValue() {
+    public Integer getDiamondValue() {
         return diamondValue;
     }
 
-    public void setDiamondValue(int diamondValue) {
+    public void setDiamondValue(Integer diamondValue) {
         this.diamondValue = diamondValue;
     }
 
-    public int getGoldCapacity() {
+    public Integer getGoldCapacity() {
         return goldCapacity;
     }
 
-    public void setGoldCapacity(int goldCapacity) {
+    public void setGoldCapacity(Integer goldCapacity) {
         this.goldCapacity = goldCapacity;
     }
 
-    public int getDiamondCapacity() {
+    public Integer getDiamondCapacity() {
         return diamondCapacity;
     }
 
-    public void setDiamondCapacity(int diamondCapacity) {
+    public void setDiamondCapacity(Integer diamondCapacity) {
         this.diamondCapacity = diamondCapacity;
     }
 
