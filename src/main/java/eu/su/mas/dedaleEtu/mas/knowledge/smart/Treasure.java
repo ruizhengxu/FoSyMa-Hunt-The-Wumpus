@@ -7,17 +7,21 @@ import java.util.Objects;
 
 public class Treasure implements Serializable, Comparable<Treasure> {
 
+    private String location;
     private Integer value;
     private Observation type;
     private int lastModifiedDate;
     private TreasureState state;
 
-    public Treasure(Observation type, int value, int foundedDate, TreasureState state) {
+    public Treasure(String location, Observation type, int value, int foundedDate, TreasureState state) {
+        this.location = location;
         this.type = type;
         this.value = value;
         this.lastModifiedDate = foundedDate;
         this.state = state;
     }
+
+    public String getLocation() {return this.location;}
 
     public Integer getValue() {
         return this.value;
@@ -46,7 +50,8 @@ public class Treasure implements Serializable, Comparable<Treasure> {
     @Override
     public String toString() {
         return "Treasure{" +
-                "value=" + value +
+                "location='" + location + '\'' +
+                ", value=" + value +
                 ", type=" + type +
                 ", lastModifiedDate=" + lastModifiedDate +
                 ", state=" + state +
@@ -66,12 +71,12 @@ public class Treasure implements Serializable, Comparable<Treasure> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Treasure treasure = (Treasure) o;
-        return value == treasure.value && type == treasure.type && state == treasure.state;
+        return location == treasure.location && value == treasure.value && type == treasure.type && state == treasure.state;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, type, state);
+        return Objects.hash(location, value, type, state);
     }
 
     @Override
