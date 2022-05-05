@@ -1,5 +1,6 @@
 package eu.su.mas.dedaleEtu.mas.agents.smart;
 
+import dataStructures.serializableGraph.SerializableSimpleGraph;
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
@@ -19,8 +20,12 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     public MapRepresentation myMap;
     private Observation treasureType;
     private AgentState agentState;
+    private boolean mapRepresentationUpdated;
     private boolean treasureMapUpdated;
     private boolean agentInfoUpdated;
+    private int lastMapUpdateDate;
+    private int lastTreasureUpdateDate;
+    private int lastAgentInfoUpdateDate;
     private HashMap<String, Treasure> treasuresMap = new HashMap<>();
     private HashMap<String, AgentInfo> agentInfo = new HashMap<>();
     private int totalStep;
@@ -29,6 +34,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private static final String A = "A";
     private static final String B = "B";
     private static final String C = "C";
+    private static final String D = "D";
 
     private List<String> past_position = new ArrayList<String>();
 
@@ -56,17 +62,26 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         this.agentInfo.put(this.getLocalName(), info);
         this.treasureMapUpdated = true;
         this.agentInfoUpdated = true;
+        this.mapRepresentationUpdated = true;
+        this.lastMapUpdateDate = 0;
+        this.lastTreasureUpdateDate = 0;
+        this.lastAgentInfoUpdateDate = 0;
 
         FSMBehaviour fsm = new FSMBehaviour(this);
         fsm.registerFirstState(new PingNShareBehaviour(this, receivers), A);
         fsm.registerState(new MoveBehaviour(this), B);
         fsm.registerState(new InterBlockedBehaviour(this, receivers), C);
+        fsm.registerState(new CollectBehaviour(this), D);
+        // TRANSITION
         fsm.registerDefaultTransition(A, B);
         fsm.registerDefaultTransition(B, A);
         // after blocking we transit to the Move Behaviour
-        fsm.registerDefaultTransition(C, B);
-
         fsm.registerTransition(B, C, 1);
+        fsm.registerDefaultTransition(C, B);
+        // collect behaviour
+        fsm.registerTransition(B, D, 2);
+        fsm.registerDefaultTransition(D, A);
+        fsm.registerTransition(A, D, 1);
 
         List<Behaviour> lb = new ArrayList<Behaviour>();
         lb.add(fsm);
@@ -181,6 +196,34 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         this.agentState = agentState;
     }
 
+    public boolean switchToCollect() {
+//        System.out.printf("%s - AgentSize : %d, TotalStep : %d, lastMap : %d, lastTre : %d, lastAg : %d\n", this.getLocalName(), this.agentInfo.size(), this.totalStep, this.lastMapUpdateDate, this.lastTreasureUpdateDate, this.lastAgentInfoUpdateDate);
+//        System.out.println((this.agentInfo.size() == this.nbAgent));
+//        System.out.println((this.totalStep - this.lastMapUpdateDate > 0));
+//        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 15));
+        if ((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastMapUpdateDate > 0) &&
+                (this.totalStep - this.lastTreasureUpdateDate > 15)) {
+            this.setAgentState(AgentState.COLLECT);
+            System.out.println("############################################################");
+            System.out.println(this.getLocalName() + " passes to COLLECT");
+            System.out.println("############################################################");
+            this.generateStrategy();
+            return true;
+        }
+        return false;
+    }
+
+    public void mergeMap(SerializableSimpleGraph<String, MapRepresentation.MapAttribute> map) {
+        List<String> openNodesBefore = this.myMap.getOpenNodes();
+        List<String> closedNodesBefore = this.myMap.getClosedNodes();
+        this.myMap.mergeMap(map);
+        List<String> openNodesAfter = this.myMap.getOpenNodes();
+        List<String> closedNodesAfter = this.myMap.getClosedNodes();
+
+        this.mapRepresentationUpdated = !openNodesBefore.equals(openNodesAfter) || !closedNodesBefore.equals(closedNodesAfter);
+        this.lastMapUpdateDate = this.mapRepresentationUpdated?this.totalStep:this.lastMapUpdateDate;
+    }
+
     public boolean isTreasureMapUpdated() {
         return this.treasureMapUpdated;
     }
@@ -195,10 +238,12 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
             if (treasure.getLastModifiedDate() > t.getLastModifiedDate()) { // If new treasure is founded later
                 this.treasuresMap.put(location, treasure);
                 this.treasureMapUpdated = true;
+                this.lastTreasureUpdateDate = this.totalStep;
             }
         } else {
             this.treasuresMap.put(location, treasure);
             this.treasureMapUpdated = true;
+            this.lastTreasureUpdateDate = this.totalStep;
         }
     }
 
@@ -213,6 +258,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         t.setLastModifiedDate(this.totalStep);
         this.treasuresMap.put(location, t);
         this.treasureMapUpdated = true;
+        this.lastTreasureUpdateDate = this.totalStep;
         this.updateMyInfo(t.getType(), pickedValue);
     }
 
@@ -222,12 +268,14 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         t.setLastModifiedDate(this.totalStep);
         this.treasuresMap.put(location, t);
         this.treasureMapUpdated = true;
+        this.lastTreasureUpdateDate = this.totalStep;
     }
 
     public void mergeTreasuresMap(HashMap<String, Treasure> tm) {
         if (! this.treasuresMap.equals(tm)) {
             HashMap<String, Treasure> tmp = (HashMap<String, Treasure>) this.treasuresMap.clone();
-            System.out.println("before merge :" + this.treasuresMap + " U " + tm);
+            System.out.println(this.getLocalName());
+            System.out.println("before merge :" + this.treasuresMap);
             for (Map.Entry<String, Treasure> entry : tm.entrySet()) {
                 // If it is a new treasure
                 if (!this.treasuresMap.containsKey(entry.getKey())) {
@@ -244,7 +292,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
                 }
             }
             System.out.println("after merge :" + this.treasuresMap);
-            this.treasureMapUpdated = this.treasuresMap.equals(tmp);
+            this.treasureMapUpdated = !this.treasuresMap.equals(tmp);
+            this.lastTreasureUpdateDate = this.treasureMapUpdated?this.totalStep:this.lastTreasureUpdateDate;
         }
     }
 
@@ -254,6 +303,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     private void updateMyInfo(Observation type, int value) {
         AgentInfo me = this.agentInfo.get(this.getLocalName());
+        me.setLastModifiedDate(this.totalStep);
         if (type.equals(Observation.GOLD)) {
             me.setGoldValue(me.getGoldValue()+value);
         } else if (type.equals(Observation.DIAMOND)) {
@@ -261,12 +311,14 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         }
         this.agentInfo.put(this.getLocalName(), me);
         this.agentInfoUpdated = true;
+        this.lastAgentInfoUpdateDate = this.totalStep;
     }
 
     public void mergeAgentInfo(HashMap<String, AgentInfo> infos) {
         if (! this.agentInfo.equals(infos)) {
             HashMap<String, AgentInfo> tmp = (HashMap<String, AgentInfo>) this.agentInfo.clone();
-            System.out.println("before merge :" + this.agentInfo + " U " + infos);
+            System.out.println(this.getLocalName());
+            System.out.println("before merge :" + this.agentInfo);
             for (Map.Entry<String, AgentInfo> entry : infos.entrySet()) {
                 if (!this.agentInfo.containsKey(entry.getKey())) {
                     this.agentInfo.put(entry.getKey(), entry.getValue());
@@ -280,11 +332,34 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
                 }
             }
             System.out.println("after merge :" + this.agentInfo);
-            this.agentInfoUpdated = this.agentInfo.equals(tmp);
+            this.agentInfoUpdated = !this.agentInfo.equals(tmp);
+            this.lastAgentInfoUpdateDate = this.agentInfoUpdated?this.totalStep:this.lastAgentInfoUpdateDate;
         }
     }
 
     public boolean isAgentInfoUpdated() {
         return this.agentInfoUpdated;
+    }
+
+    private void kMeans(List<Treasure> treasureList, int nbClass) {
+        HashMap<Integer, List<Treasure>> target = new HashMap<>();
+
+    }
+
+    private void generateStrategy() {
+        System.out.println(this.treasuresMap);
+        int sumOfGold = 0;
+        int sumOfDiamond = 0;
+        for (Treasure t: this.treasuresMap.values()) {
+            if (t.getType().equals(Observation.GOLD)) {
+                sumOfGold += t.getValue();
+            } else {
+                sumOfDiamond += t.getValue();
+            }
+        }
+        int objValue = (sumOfGold+sumOfDiamond)/this.nbAgent; // Objective value of each agent
+        int nbRequiredForDiamond = (int)Math.ceil((double)sumOfDiamond/objValue); // Number of agent to collect diamond
+        int nbRequiredForGold = this.nbAgent-nbRequiredForDiamond; // Number of agent to collect gold
+        System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, objValue, nbRequiredForGold, nbRequiredForDiamond);
     }
 }

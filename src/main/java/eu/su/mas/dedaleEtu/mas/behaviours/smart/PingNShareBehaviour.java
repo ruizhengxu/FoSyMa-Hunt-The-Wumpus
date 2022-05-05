@@ -4,6 +4,7 @@ import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.smart.ExploreFSMAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentInfo;
+import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentState;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
 import jade.core.AID;
@@ -78,7 +79,7 @@ public class PingNShareBehaviour extends OneShotBehaviour {
                     } catch (UnreadableException e) {
                         e.printStackTrace();
                     }
-                    ((ExploreFSMAgent) this.myAgent).myMap.mergeMap(receivedMap);
+                    ((ExploreFSMAgent) this.myAgent).mergeMap(receivedMap);
                     break;
                 case "SHARE-TREASURE":
                     HashMap<String, Treasure> receivedTreasuresMap = null;
@@ -111,6 +112,10 @@ public class PingNShareBehaviour extends OneShotBehaviour {
                     break;
             }
         }
+
+
+        if (((ExploreFSMAgent) this.myAgent).getCurrentAgentState().equals(AgentState.COLLECT))
+            this.exitValue = 1;
     }
 
     @Override

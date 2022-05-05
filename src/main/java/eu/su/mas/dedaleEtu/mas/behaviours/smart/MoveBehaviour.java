@@ -79,6 +79,7 @@ public class MoveBehaviour extends OneShotBehaviour {
 	            for(Couple<Observation,Integer> o:lObservations){
 	                switch (o.getLeft()) {
 	                    case DIAMOND:case GOLD:
+							System.out.println(this.myAgent.getLocalName()+" - My current state is : "+(((ExploreFSMAgent)this.myAgent).getCurrentAgentState()));
 	                        System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+(((ExploreFSMAgent)this.myAgent).getTreasureType()));
 	                        System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
 	                        System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
@@ -158,6 +159,13 @@ public class MoveBehaviour extends OneShotBehaviour {
 					((ExploreFSMAgent)this.myAgent).increaseStep();
 	                System.out.println(this.myAgent.getLocalName() + " want to move to " + nextNode);
 	            }
+
+				if (((ExploreFSMAgent)this.myAgent).getCurrentAgentState().equals(AgentState.EXPLORE)) {
+					boolean switched = ((ExploreFSMAgent) this.myAgent).switchToCollect();
+					if (switched) {
+						this.exitValue = 2;
+					}
+				}
         	}
         }
     }
