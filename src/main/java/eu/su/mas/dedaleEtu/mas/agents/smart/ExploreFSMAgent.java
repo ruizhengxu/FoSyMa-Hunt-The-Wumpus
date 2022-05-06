@@ -53,6 +53,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private Integer time = 100;
     private Integer nbAgent;
     private ArrayList<Integer> findedOnLastPass = new ArrayList<Integer>();
+    private List<Treasure> strategy;
 
     protected void setup() {
         super.setup();
@@ -79,7 +80,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         fsm.registerState(new ExploreBehaviour(this), EXPLO);
         fsm.registerState(new InterBlockedBehaviour(this, receivers), INTERBLOCK);
         fsm.registerState(new CollectBehaviour(this), COLLECT);
-        fsm.registerLastState(new FinishBehaviour(this), FINISH);
+        fsm.registerState(new GarbageCollectorBehaviour(this), FINISH);
         // TRANSITION
         fsm.registerDefaultTransition(PINGNSHARE, EXPLO);
         fsm.registerTransition(PINGNSHARE, COLLECT, 1);
@@ -91,6 +92,10 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         fsm.registerDefaultTransition(COLLECT, PINGNSHARE);
         fsm.registerTransition(COLLECT, INTERBLOCK, 1);
         fsm.registerTransition(COLLECT, FINISH, 2);
+
+        fsm.registerDefaultTransition(FINISH, FINISH);
+        fsm.registerTransition(FINISH, INTERBLOCK, 1);
+        fsm.registerTransition(INTERBLOCK, FINISH, 2);
 
         List<Behaviour> lb = new ArrayList<Behaviour>();
         lb.add(fsm);
@@ -218,7 +223,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 //        System.out.println((this.agentInfo.size() == this.nbAgent));
 //        System.out.println((this.totalStep - this.lastMapUpdateDate > 20));
 //        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 25));
-        if ( (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 20) && (this.myMap.getOpenNodes().size()<5) && ((this.totalStep - this.lastMapUpdateDate > 15) || (! this.myMap.hasOpenNode())) ) {
+        if ((! this.myMap.hasOpenNode())) {
+            // (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 20) && (this.myMap.getOpenNodes().size()<5) && ((this.totalStep - this.lastMapUpdateDate > 15) || (! this.myMap.hasOpenNode())) 
             this.setAgentState(AgentState.COLLECT);
             System.out.println("############################################################");
             System.out.println(this.getLocalName() + " passes to COLLECT");
@@ -478,6 +484,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         for (Treasure t: strategy.get(this.getLocalName())) {
             this.treasureToPick.add(t.getLocation());
         }
+
+        this.strategy = strategy.get(this.getLocalName());
     }
 
     private AgentInfo getAgentWithHighestCapOfGold(List<AgentInfo> agentList) {
@@ -528,16 +536,20 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
             e.printStackTrace();
         }
         ((AbstractDedaleAgent) this).moveTo(((ExploreFSMAgent)this).getNextMove());
-        try {
-            this.doWait(((ExploreFSMAgent)this).getTime());
-        } catch (Exception e) {
-            e.printStackTrace();
+
+        int t = 1 + new Random().nextInt(this.nbAgent);
+        for(int i = 0; i < t; ++i){
+            try {
+                this.doWait(((ExploreFSMAgent)this).getTime());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            /* Move randomly */
+            List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this).observe();
+            int index = 1 + new Random().nextInt(obs.size() - 1);
+            String pos = obs.get(index).getLeft();
+            ((AbstractDedaleAgent) this).moveTo(pos);
         }
-        /* Move randomly */
-        List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this).observe();
-        int index = new Random().nextInt(obs.size() - 1);
-        String pos = obs.get(index).getLeft();
-        ((AbstractDedaleAgent) this).moveTo(pos);
 
         ((ExploreFSMAgent)this).setNextMove(null);
     }
@@ -548,5 +560,24 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     public void addFindedOnLastPass(int i) {
         this.findedOnLastPass.add(i);
+    }
+
+    public int getIdealValueToTarget() {
+        return this.objValue;
+    }
+
+    public Integer getCurrentValue(Observation o) {
+        AgentInfo me = this.agentInfo.get(this.getLocalName());
+        return o ==  Observation.GOLD ? me.getGoldValue() : me.getDiamondValue();
+    }
+
+    public Integer getCurrentCapacity() {
+
+        AgentInfo me = this.agentInfo.get(this.getLocalName());
+        return this.strategy.get(0).getType() == Observation.GOLD ? me.getGoldCapacity() : me.getDiamondCapacity();
+    }
+
+    public List<Treasure> getStrategy() {
+        return this.strategy;
     }
 }

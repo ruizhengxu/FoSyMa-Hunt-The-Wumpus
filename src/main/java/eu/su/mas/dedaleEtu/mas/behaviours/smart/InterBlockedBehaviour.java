@@ -88,6 +88,8 @@ public class InterBlockedBehaviour extends OneShotBehaviour {
 
         if (((ExploreFSMAgent)this.myAgent).getCurrentAgentState().equals(AgentState.COLLECT)) {
             this.exitValue = 1;
+        } else if (((ExploreFSMAgent)this.myAgent).getCurrentAgentState().equals(AgentState.FINISH)) {
+            this.exitValue = 2;
         }
     }
 

@@ -125,6 +125,7 @@ public class CollectBehaviour extends OneShotBehaviour {
                     ((ExploreFSMAgent) this.myAgent).increaseStep();
                 } else {
                     this.exitValue = 2;
+                    ((ExploreFSMAgent) this.myAgent).setAgentState(AgentState.FINISH);
                 }
             }
         }
