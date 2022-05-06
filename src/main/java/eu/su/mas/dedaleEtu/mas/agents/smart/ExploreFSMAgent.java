@@ -218,7 +218,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 //        System.out.println((this.agentInfo.size() == this.nbAgent));
 //        System.out.println((this.totalStep - this.lastMapUpdateDate > 20));
 //        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 25));
-        if ( (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 15) && (this.myMap.getOpenNodes().size()<6) && ((this.totalStep - this.lastMapUpdateDate > 10) || (! this.myMap.hasOpenNode())) ) {
+        if ( (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 20) && (this.myMap.getOpenNodes().size()<5) && ((this.totalStep - this.lastMapUpdateDate > 15) || (! this.myMap.hasOpenNode())) ) {
             this.setAgentState(AgentState.COLLECT);
             System.out.println("############################################################");
             System.out.println(this.getLocalName() + " passes to COLLECT");
