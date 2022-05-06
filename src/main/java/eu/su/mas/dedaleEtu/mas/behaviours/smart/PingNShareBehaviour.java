@@ -84,13 +84,12 @@ public class PingNShareBehaviour extends OneShotBehaviour {
             // Share map
             this.shareMap(msgReceived.getSender());
             // Share treasure map
-            if (((ExploreFSMAgent) this.myAgent).getTreasuresMap().size() > 0 && ((ExploreFSMAgent)this.myAgent).isTreasureMapUpdated())
+            if (((ExploreFSMAgent) this.myAgent).getTreasuresMap().size() > 0)
                 this.shareTreasuresMap(msgReceived.getSender());
             // Share agent info
-            if (((ExploreFSMAgent)this.myAgent).isAgentInfoUpdated())
-                this.shareAgentInfo(msgReceived.getSender());
-//                System.out.println(this.myAgent.getLocalName() + " share his knowledge");
-        }
+            this.shareAgentInfo(msgReceived.getSender());
+//            System.out.println(this.myAgent.getLocalName() + " share his knowledge");
+    }
     }
 
     private void checkShareMap() {

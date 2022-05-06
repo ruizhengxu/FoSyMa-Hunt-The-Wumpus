@@ -112,12 +112,16 @@ public class CollectBehaviour extends OneShotBehaviour {
                                     ((ExploreFSMAgent) this.myAgent).missTreasure(myPosition);
                                 }
                             }
+                            if (((ExploreFSMAgent)this.myAgent).getTreasureToPick().contains(myPosition)) {
+                                ((ExploreFSMAgent)this.myAgent).removeTreasureToPick(myPosition);
+                            }
                             break;
                     }
                 }
                 String nearestTreasure = ((ExploreFSMAgent)this.myAgent).findNearestTreasure(myPosition);
                 if (nearestTreasure != null) {
-                    System.out.println(this.myAgent.getLocalName() + " - " + "nearest treasure is " + nearestTreasure);
+                    System.out.println(this.myAgent.getLocalName() + " - " + " my position is " + myPosition);
+                    System.out.println(this.myAgent.getLocalName() + " - " + " nearest treasure is " + nearestTreasure);
                     System.out.println("Shortest path : " + ((ExploreFSMAgent) this.myAgent).myMap.getShortestPath(myPosition, nearestTreasure));
                     String nextNode = ((ExploreFSMAgent) this.myAgent).myMap.getShortestPath(myPosition, nearestTreasure).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
                     System.out.println(this.myAgent.getLocalName() + " - " + "next node is " + nextNode);

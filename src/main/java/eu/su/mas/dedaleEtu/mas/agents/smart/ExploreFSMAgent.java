@@ -223,8 +223,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 //        System.out.println((this.agentInfo.size() == this.nbAgent));
 //        System.out.println((this.totalStep - this.lastMapUpdateDate > 20));
 //        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 25));
-        if ((! this.myMap.hasOpenNode())) {
-            // (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 20) && (this.myMap.getOpenNodes().size()<5) && ((this.totalStep - this.lastMapUpdateDate > 15) || (! this.myMap.hasOpenNode())) 
+        if ((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 5) && (this.myMap.getOpenNodes().size()<3) && ((this.totalStep - this.lastMapUpdateDate > 5) || (! this.myMap.hasOpenNode()))) {
+//             (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 20) && (this.myMap.getOpenNodes().size()<5) && ((this.totalStep - this.lastMapUpdateDate > 15) || (! this.myMap.hasOpenNode()))
             this.setAgentState(AgentState.COLLECT);
             System.out.println("############################################################");
             System.out.println(this.getLocalName() + " passes to COLLECT");
@@ -336,8 +336,8 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
             me.setDiamondValue(me.getDiamondValue()+value);
         }
         this.agentInfo.put(this.getLocalName(), me);
-        this.agentInfoUpdated = true;
-        this.lastAgentInfoUpdateDate = this.totalStep;
+//        this.agentInfoUpdated = true;
+//        this.lastAgentInfoUpdateDate = this.totalStep;
     }
 
     public void mergeAgentInfo(HashMap<String, AgentInfo> infos) {
@@ -441,35 +441,59 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         Collections.sort(goldList);
         Collections.sort(diamondList);
         this.objValue = (sumOfGold+sumOfDiamond)/this.nbAgent; // Objective value of each agent
+        int nbRequiredForDiamond = Math.min((int)Math.ceil((double)sumOfDiamond/this.objValue), diamondList.size()); // Number of agent to collect diamond
+        int nbRequiredForGold = Math.min(this.nbAgent-nbRequiredForDiamond, goldList.size()); // Number of agent to collect gold
 
         List<AgentInfo> agentList = new ArrayList<>();
         for (AgentInfo info: this.agentInfo.values()) {
             agentList.add(info);
         }
 
-        System.out.printf("%d %d %d\n", sumOfGold, sumOfDiamond, this.objValue);
+        System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, this.objValue, nbRequiredForGold, nbRequiredForDiamond);
 
         while (agentList.size() > 0) {
-            AgentInfo agG = getAgentWithHighestCapOfGold(agentList);
-            AgentInfo agD = getAgentWithHighestCapOfDiamond(agentList);
-            if (agG.getGoldCapacity() > agD.getDiamondCapacity()) {
-                if (sumOfGold > 0 && Math.abs(sumOfGold-agG.getGoldCapacity())<Math.abs(sumOfDiamond-agG.getDiamondCapacity())) {
-                    goldAgentList.add(agG.getName());
-                    sumOfGold -= agG.getGoldCapacity();
+            if (nbRequiredForGold >= nbRequiredForDiamond) {
+                if (agentList.size() > 1) {
+                    AgentInfo ag1 = getAgentWithHighestCapOfGold(agentList);
+                    agentList.remove(ag1);
+                    AgentInfo ag2 = getAgentWithHighestCapOfGold(agentList);
+                    agentList.remove(ag2);
+                    if (ag1.getGoldCapacity()/ag1.getDiamondCapacity() < ag2.getGoldCapacity()/ag2.getDiamondCapacity()) {
+                        agentList.add(ag2);
+                        goldAgentList.add(ag1.getName());
+                        nbRequiredForGold -= 1;
+                    } else {
+                        agentList.add(ag1);
+                        goldAgentList.add(ag2.getName());
+                        nbRequiredForGold -= 1;
+                    }
                 } else {
-                    diamondAgentList.add(agG.getName());
-                    sumOfGold -= agG.getDiamondCapacity();
+                    AgentInfo ag = getAgentWithHighestCapOfGold(agentList);
+                    goldAgentList.add(ag.getName());
+                    agentList.remove(ag);
+                    nbRequiredForGold -= 1;
                 }
-                agentList.remove(agG);
             } else {
-                if (sumOfDiamond > 0 && Math.abs(sumOfDiamond-agD.getDiamondCapacity())<Math.abs(sumOfGold-agD.getGoldCapacity())) {
-                    diamondAgentList.add(agD.getName());
-                    sumOfGold -= agD.getDiamondCapacity();
+                if (agentList.size() > 1) {
+                    AgentInfo ag1 = getAgentWithHighestCapOfDiamond(agentList);
+                    agentList.remove(ag1);
+                    AgentInfo ag2 = getAgentWithHighestCapOfDiamond(agentList);
+                    agentList.remove(ag2);
+                    if (ag1.getGoldCapacity()/ag1.getDiamondCapacity() < ag2.getGoldCapacity()/ag2.getDiamondCapacity()) {
+                        agentList.add(ag2);
+                        diamondAgentList.add(ag1.getName());
+                        nbRequiredForDiamond -= 1;
+                    } else {
+                        agentList.add(ag1);
+                        diamondAgentList.add(ag2.getName());
+                        nbRequiredForDiamond -= 1;
+                    }
                 } else {
-                    goldAgentList.add(agD.getName());
-                    sumOfGold -= agD.getGoldCapacity();
+                    AgentInfo ag = getAgentWithHighestCapOfDiamond(agentList);
+                    diamondAgentList.add(ag.getName());
+                    agentList.remove(ag);
+                    nbRequiredForDiamond -= 1;
                 }
-                agentList.remove(agD);
             }
         }
 
@@ -510,6 +534,10 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     public List<String> getTreasureToPick() {
         return this.treasureToPick;
+    }
+
+    public void removeTreasureToPick(String location) {
+        this.treasureToPick.remove(location);
     }
 
     public String findNearestTreasure(String myPosition) {
