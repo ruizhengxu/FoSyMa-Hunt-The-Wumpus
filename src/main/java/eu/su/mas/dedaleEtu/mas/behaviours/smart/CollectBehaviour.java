@@ -25,8 +25,12 @@ public class CollectBehaviour extends OneShotBehaviour {
 
     @Override
     public void action() {
-        System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS");
+
+        this.exitValue = 0;
+
         String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+
+        System.out.println(this.myAgent.getLocalName() + " - " + myPosition);
 
         if (myPosition != null) {
 
@@ -34,7 +38,7 @@ public class CollectBehaviour extends OneShotBehaviour {
             ((ExploreFSMAgent)this.myAgent).addPastPosition(myPosition);
 
             if (((ExploreFSMAgent)this.myAgent).isBlocked()) {
-                //System.out.println("BLOCKED IN MOVE");
+                System.out.println("BLOCKED IN MOVE");
                 if (((ExploreFSMAgent)this.myAgent).getNextMove() != null) {
                     try {
                         this.myAgent.doWait(((ExploreFSMAgent)this.myAgent).getTime());
@@ -59,7 +63,7 @@ public class CollectBehaviour extends OneShotBehaviour {
 
                 this.exitValue = 1;
 
-            } else if (((ExploreFSMAgent)this.myAgent).getTreasureToPick().contains(myPosition)){
+            } else {
 
                 //List of observable from the agent's current position
                 List<Couple<String, List<Couple<Observation, Integer>>>> lobs = ((AbstractDedaleAgent) this.myAgent).observe();//myPosition
@@ -79,25 +83,27 @@ public class CollectBehaviour extends OneShotBehaviour {
                 for(Couple<Observation,Integer> o:lObservations){
                     switch (o.getLeft()) {
                         case DIAMOND:case GOLD:
-                            System.out.println(this.myAgent.getLocalName()+" - My current state is : "+(((ExploreFSMAgent)this.myAgent).getCurrentAgentState()));
-	                        System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+(((ExploreFSMAgent)this.myAgent).getTreasureType()));
-	                        System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
-	                        System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
-                            if (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.ANY_TREASURE)) {
-                                ((ExploreFSMAgent)this.myAgent).setTreasureType(o.getLeft());
-                                System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(Observation.ANY_TREASURE));
-                                int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
-                                System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
-                                ((ExploreFSMAgent)this.myAgent).pickedTreasure(myPosition, pickedQuantity);
-                            } else if (((ExploreFSMAgent)this.myAgent).getTreasureType() == o.getLeft()) {
-                                System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(((ExploreFSMAgent)this.myAgent).getTreasureType()));
-                                int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
-                                System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
-                                ((ExploreFSMAgent)this.myAgent).pickedTreasure(myPosition, pickedQuantity);
-                            } else {
-                                System.out.println(this.myAgent.getLocalName() + " - I can't pick up this treasure");
+                            if (((ExploreFSMAgent)this.myAgent).getTreasureToPick().contains(myPosition)) {
+                                System.out.println(this.myAgent.getLocalName()+" - My current state is : "+(((ExploreFSMAgent)this.myAgent).getCurrentAgentState()));
+                                System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+(((ExploreFSMAgent)this.myAgent).getTreasureType()));
+                                System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
+                                System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
+                                if (((ExploreFSMAgent) this.myAgent).getTreasureType().equals(Observation.ANY_TREASURE)) {
+                                    ((ExploreFSMAgent) this.myAgent).setTreasureType(o.getLeft());
+                                    System.out.println(this.myAgent.getLocalName() + " - I try to open the safe: " + ((AbstractDedaleAgent) this.myAgent).openLock(Observation.ANY_TREASURE));
+                                    int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
+                                    System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
+                                    ((ExploreFSMAgent) this.myAgent).pickedTreasure(myPosition, pickedQuantity);
+                                } else if (((ExploreFSMAgent) this.myAgent).getTreasureType() == o.getLeft()) {
+                                    System.out.println(this.myAgent.getLocalName() + " - I try to open the safe: " + ((AbstractDedaleAgent) this.myAgent).openLock(((ExploreFSMAgent) this.myAgent).getTreasureType()));
+                                    int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
+                                    System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
+                                    ((ExploreFSMAgent) this.myAgent).pickedTreasure(myPosition, pickedQuantity);
+                                } else {
+                                    System.out.println(this.myAgent.getLocalName() + " - I can't pick up this treasure");
+                                }
+                                System.out.println(this.myAgent.getLocalName() + " - the remaining backpack capacity is: " + ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
                             }
-                            System.out.println(this.myAgent.getLocalName()+" - the remaining backpack capacity is: "+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
                             break;
                         default: // If there is nothing in my position
                             if (((ExploreFSMAgent)this.myAgent).getTreasuresMap().containsKey(myPosition)) {// If the current position is in my treasure map so I need to remove it
@@ -109,12 +115,17 @@ public class CollectBehaviour extends OneShotBehaviour {
                             break;
                     }
                 }
-
-                String nearstTreasure = ((ExploreFSMAgent)this.myAgent).findNearestTreasure(myPosition);
-                String nextNode = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPath(myPosition, nearstTreasure).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
-                ((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
-                ((ExploreFSMAgent)this.myAgent).increaseStep();
-
+                String nearestTreasure = ((ExploreFSMAgent)this.myAgent).findNearestTreasure(myPosition);
+                if (nearestTreasure != null) {
+                    System.out.println(this.myAgent.getLocalName() + " - " + "nearest treasure is " + nearestTreasure);
+                    System.out.println("Shortest path : " + ((ExploreFSMAgent) this.myAgent).myMap.getShortestPath(myPosition, nearestTreasure));
+                    String nextNode = ((ExploreFSMAgent) this.myAgent).myMap.getShortestPath(myPosition, nearestTreasure).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
+                    System.out.println(this.myAgent.getLocalName() + " - " + "next node is " + nextNode);
+                    ((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
+                    ((ExploreFSMAgent) this.myAgent).increaseStep();
+                } else {
+                    this.exitValue = 2;
+                }
             }
         }
     }

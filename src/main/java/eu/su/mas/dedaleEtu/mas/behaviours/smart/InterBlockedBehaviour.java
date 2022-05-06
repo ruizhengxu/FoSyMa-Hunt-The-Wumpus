@@ -8,6 +8,7 @@ import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.smart.ExploreFSMAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentState;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -84,6 +85,10 @@ public class InterBlockedBehaviour extends OneShotBehaviour {
         }
 
         ((ExploreFSMAgent) this.myAgent).clearBusyNeighbors();
+
+        if (((ExploreFSMAgent)this.myAgent).getCurrentAgentState().equals(AgentState.COLLECT)) {
+            this.exitValue = 1;
+        }
     }
 
     @Override

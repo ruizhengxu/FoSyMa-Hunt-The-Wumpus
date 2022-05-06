@@ -42,15 +42,32 @@ public class ExploreBehaviour extends OneShotBehaviour {
         	//Adding past position into agent list
         	((ExploreFSMAgent)this.myAgent).addPastPosition(myPosition);
 
-        	if (((ExploreFSMAgent)this.myAgent).isBlocked()) {
+			if (((ExploreFSMAgent)this.myAgent).isBlocked()) {
 				//System.out.println("BLOCKED IN MOVE");
 				if (((ExploreFSMAgent)this.myAgent).getNextMove() != null) {
-					((ExploreFSMAgent)this.myAgent).moveAfterBlocking();
+					try {
+						this.myAgent.doWait(((ExploreFSMAgent)this.myAgent).getTime());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					((AbstractDedaleAgent) this.myAgent).moveTo(((ExploreFSMAgent)this.myAgent).getNextMove());
+					try {
+						this.myAgent.doWait(((ExploreFSMAgent)this.myAgent).getTime());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					/* Move randomly */
+					List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this.myAgent).observe();
+					int index = new Random().nextInt(obs.size() - 1);
+					String pos = obs.get(index).getLeft();
+					((AbstractDedaleAgent) this.myAgent).moveTo(pos);
+					((ExploreFSMAgent)this.myAgent).increaseStep();
+					((ExploreFSMAgent)this.myAgent).setNextMove(null);
 					return;
 				}
 
-        		this.exitValue = 1;
-        		
+				this.exitValue = 1;
+
         	} else {
         		
 	            //List of observable from the agent's current position

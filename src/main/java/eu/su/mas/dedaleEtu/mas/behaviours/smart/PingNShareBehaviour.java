@@ -64,8 +64,9 @@ public class PingNShareBehaviour extends OneShotBehaviour {
         this.checkShareTreasure();
         this.checkShareAgentInfo();
 
-        if (((ExploreFSMAgent) this.myAgent).getCurrentAgentState().equals(AgentState.COLLECT))
+        if (((ExploreFSMAgent) this.myAgent).getCurrentAgentState().equals(AgentState.COLLECT)) {
             this.exitValue = 1;
+        }
     }
 
     @Override

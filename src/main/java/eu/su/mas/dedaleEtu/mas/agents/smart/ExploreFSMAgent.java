@@ -32,12 +32,14 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private List<String> treasureToPick = new ArrayList<>();
     private int totalStep;
     private int messageSend;
+    private Integer objValue;
 
     // State names
-    private static final String A = "A";
-    private static final String B = "B";
-    private static final String C = "C";
-    private static final String D = "D";
+    private static final String PINGNSHARE = "A";
+    private static final String EXPLO = "B";
+    private static final String INTERBLOCK = "C";
+    private static final String COLLECT = "D";
+    private static final String FINISH = "E";
 
     private List<String> past_position = new ArrayList<String>();
 
@@ -73,20 +75,22 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         this.lastAgentInfoUpdateDate = 0;
 
         FSMBehaviour fsm = new FSMBehaviour(this);
-        fsm.registerFirstState(new PingNShareBehaviour(this, receivers), A);
-        fsm.registerState(new ExploreBehaviour(this), B);
-        fsm.registerState(new InterBlockedBehaviour(this, receivers), C);
-        fsm.registerLastState(new CollectBehaviour(this), D);
+        fsm.registerFirstState(new PingNShareBehaviour(this, receivers), PINGNSHARE);
+        fsm.registerState(new ExploreBehaviour(this), EXPLO);
+        fsm.registerState(new InterBlockedBehaviour(this, receivers), INTERBLOCK);
+        fsm.registerState(new CollectBehaviour(this), COLLECT);
+        fsm.registerLastState(new FinishBehaviour(this), FINISH);
         // TRANSITION
-        fsm.registerDefaultTransition(A, B);
-        fsm.registerDefaultTransition(B, A);
-        // after blocking we transit to the Move Behaviour
-        fsm.registerTransition(B, C, 1);
-        fsm.registerDefaultTransition(C, B);
-        // collect behaviour
-        fsm.registerTransition(B, D, 2);
-        fsm.registerDefaultTransition(D, A);
-        fsm.registerTransition(A, D, 1);
+        fsm.registerDefaultTransition(PINGNSHARE, EXPLO);
+        fsm.registerTransition(PINGNSHARE, COLLECT, 1);
+        fsm.registerDefaultTransition(EXPLO, PINGNSHARE);
+        fsm.registerTransition(EXPLO, INTERBLOCK, 1);
+        fsm.registerTransition(EXPLO, COLLECT, 2);
+        fsm.registerDefaultTransition(INTERBLOCK, EXPLO);
+        fsm.registerTransition(INTERBLOCK, COLLECT, 1);
+        fsm.registerDefaultTransition(COLLECT, PINGNSHARE);
+        fsm.registerTransition(COLLECT, INTERBLOCK, 1);
+        fsm.registerTransition(COLLECT, FINISH, 2);
 
         List<Behaviour> lb = new ArrayList<Behaviour>();
         lb.add(fsm);
@@ -214,7 +218,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 //        System.out.println((this.agentInfo.size() == this.nbAgent));
 //        System.out.println((this.totalStep - this.lastMapUpdateDate > 20));
 //        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 25));
-        if ( (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 20) && ((this.totalStep - this.lastMapUpdateDate > 15) || (! this.myMap.hasOpenNode())) ) {
+        if ( (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 15) && (this.myMap.getOpenNodes().size()<6) && ((this.totalStep - this.lastMapUpdateDate > 10) || (! this.myMap.hasOpenNode())) ) {
             this.setAgentState(AgentState.COLLECT);
             System.out.println("############################################################");
             System.out.println(this.getLocalName() + " passes to COLLECT");
@@ -430,32 +434,37 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         }
         Collections.sort(goldList);
         Collections.sort(diamondList);
-        int objValue = (sumOfGold+sumOfDiamond)/this.nbAgent; // Objective value of each agent
-        int nbRequiredForDiamond = Math.min((int)Math.ceil((double)sumOfDiamond/objValue), diamondList.size()); // Number of agent to collect diamond
-        int nbRequiredForGold = Math.min(this.nbAgent-nbRequiredForDiamond, goldList.size()); // Number of agent to collect gold
+        this.objValue = (sumOfGold+sumOfDiamond)/this.nbAgent; // Objective value of each agent
 
         List<AgentInfo> agentList = new ArrayList<>();
         for (AgentInfo info: this.agentInfo.values()) {
             agentList.add(info);
         }
 
-        System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, objValue, nbRequiredForGold, nbRequiredForDiamond);
+        System.out.printf("%d %d %d\n", sumOfGold, sumOfDiamond, this.objValue);
 
-        while (nbRequiredForDiamond > 0 || nbRequiredForGold > 0) {
-            AgentInfo ag;
-            if (sumOfGold > sumOfDiamond) { // If sum of gold is higher
-                // Find the agent who has the highest capacity of gold
-                ag = getAgentWithHighestCapOfGold(agentList);
-                goldAgentList.add(ag.getName());
-                sumOfGold -= ag.getGoldCapacity();
-                nbRequiredForGold -= 1;
+        while (agentList.size() > 0) {
+            AgentInfo agG = getAgentWithHighestCapOfGold(agentList);
+            AgentInfo agD = getAgentWithHighestCapOfDiamond(agentList);
+            if (agG.getGoldCapacity() > agD.getDiamondCapacity()) {
+                if (sumOfGold > 0 && Math.abs(sumOfGold-agG.getGoldCapacity())<Math.abs(sumOfDiamond-agG.getDiamondCapacity())) {
+                    goldAgentList.add(agG.getName());
+                    sumOfGold -= agG.getGoldCapacity();
+                } else {
+                    diamondAgentList.add(agG.getName());
+                    sumOfGold -= agG.getDiamondCapacity();
+                }
+                agentList.remove(agG);
             } else {
-                ag = getAgentWithHighestCapOfDiamond(agentList);
-                diamondAgentList.add(ag.getName());
-                sumOfGold -= ag.getDiamondCapacity();
-                nbRequiredForDiamond -= 1;
+                if (sumOfDiamond > 0 && Math.abs(sumOfDiamond-agD.getDiamondCapacity())<Math.abs(sumOfGold-agD.getGoldCapacity())) {
+                    diamondAgentList.add(agD.getName());
+                    sumOfGold -= agD.getDiamondCapacity();
+                } else {
+                    goldAgentList.add(agD.getName());
+                    sumOfGold -= agD.getGoldCapacity();
+                }
+                agentList.remove(agD);
             }
-            agentList.remove(ag);
         }
 
         HashMap<String, List<Treasure>> strategy = null;
@@ -496,16 +505,20 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     }
 
     public String findNearestTreasure(String myPosition) {
-        String nearestTreasure = null;
-        Integer distances = Integer.MAX_VALUE;
-        for (String node: this.treasureToPick) {
-            Integer currentDist = this.myMap.getShortestPath(myPosition, node).size();
-            if (distances > currentDist) {
-                nearestTreasure = node;
-                distances = currentDist;
+        if (this.treasureToPick.size() > 0) {
+            String nearestTreasure = null;
+            Integer distances = Integer.MAX_VALUE;
+            for (String node : this.treasureToPick) {
+                Integer currentDist = this.myMap.getShortestPath(myPosition, node).size();
+                if (distances > currentDist) {
+                    nearestTreasure = node;
+                    distances = currentDist;
+                }
             }
+            return nearestTreasure;
+        } else {
+            return null;
         }
-        return nearestTreasure;
     }
 
     public void moveAfterBlocking() {
