@@ -101,7 +101,7 @@ public class CollectBehaviour extends OneShotBehaviour {
                                         System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
                                         ((ExploreFSMAgent) this.myAgent).pickedTreasure(myPosition, pickedQuantity);
                                     } else {
-                                        ((ExploreFSMAgent)this.myAgent).getTreasureToPick().remove(myPosition);
+                                        ((ExploreFSMAgent)this.myAgent).removeTreasureToPick(myPosition);
                                     }
                                 } else if (((ExploreFSMAgent) this.myAgent).getTreasureType() == o.getLeft()) {
                                     boolean open = ((AbstractDedaleAgent) this.myAgent).openLock(((ExploreFSMAgent) this.myAgent).getTreasureType());
@@ -110,7 +110,7 @@ public class CollectBehaviour extends OneShotBehaviour {
                                         System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
                                         ((ExploreFSMAgent) this.myAgent).pickedTreasure(myPosition, pickedQuantity);
                                     } else {
-                                        ((ExploreFSMAgent)this.myAgent).getTreasureToPick().remove(myPosition);
+                                        ((ExploreFSMAgent)this.myAgent).removeTreasureToPick(myPosition);
                                     }
                                 } else {
                                     System.out.println(this.myAgent.getLocalName() + " - I can't pick up this treasure");
@@ -169,11 +169,17 @@ public class CollectBehaviour extends OneShotBehaviour {
                     if (nearestTreasure != null) {
                         System.out.println(this.myAgent.getLocalName() + " - " + " my position is " + myPosition);
                         System.out.println(this.myAgent.getLocalName() + " - " + " nearest treasure is " + nearestTreasure);
-                        System.out.println("Shortest path : " + ((ExploreFSMAgent) this.myAgent).myMap.getShortestPath(myPosition, nearestTreasure));
-                        String nextNode = ((ExploreFSMAgent) this.myAgent).myMap.getShortestPath(myPosition, nearestTreasure).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
-                        System.out.println(this.myAgent.getLocalName() + " - " + "next node is " + nextNode);
-                        ((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
-                        ((ExploreFSMAgent) this.myAgent).increaseStep();
+                        List<String> path = ((ExploreFSMAgent) this.myAgent).myMap.getShortestPath(myPosition, nearestTreasure);
+                        System.out.println("Shortest path : " + path);
+                        if (path.size() > 0) {
+                            String nextNode = ((ExploreFSMAgent) this.myAgent).myMap.getShortestPath(myPosition, nearestTreasure).get(0);//getShortestPath(myPosition,this.openNodes.get(0)).get(0);
+                            System.out.println(this.myAgent.getLocalName() + " - " + "next node is " + nextNode);
+                            ((AbstractDedaleAgent) this.myAgent).moveTo(nextNode);
+                            ((ExploreFSMAgent) this.myAgent).increaseStep();
+                        } else {
+                            ((ExploreFSMAgent) this.myAgent).removeTreasureToPick(nearestTreasure);
+                            ((ExploreFSMAgent) this.myAgent).increaseStep();
+                        }
                     } else {
                         if (((ExploreFSMAgent)this.myAgent).isThereFoundedTreasure()) {
                             this.exitValue = 2;
