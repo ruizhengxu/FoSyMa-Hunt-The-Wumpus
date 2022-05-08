@@ -11,15 +11,17 @@ public class AgentInfo implements Serializable {
     private Integer diamondValue;
     private Integer goldCapacity;
     private Integer diamondCapacity;
+    private Integer strength;
     private int lastModifiedDate;
 
-    public AgentInfo(String name, int id, int goldValue, int diamondValue, int goldCapacity, int diamondCapacity, int lastModifiedDate) {
+    public AgentInfo(String name, int id, int goldValue, int diamondValue, int goldCapacity, int diamondCapacity, int strength, int lastModifiedDate) {
         this.name = name;
         this.id = id;
         this.goldValue = goldValue;
         this.diamondValue = diamondValue;
         this.goldCapacity = goldCapacity;
         this.diamondCapacity = diamondCapacity;
+        this.strength = strength;
         this.lastModifiedDate = lastModifiedDate;
     }
 
@@ -69,6 +71,14 @@ public class AgentInfo implements Serializable {
 
     public void setDiamondCapacity(Integer diamondCapacity) {
         this.diamondCapacity = diamondCapacity;
+    }
+
+    public Integer getStrength() {
+        return strength;
+    }
+
+    public void setStrength(Integer strength) {
+        this.strength = strength;
     }
 
     public int getLastModifiedDate() {

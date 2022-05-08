@@ -10,6 +10,7 @@ public class Treasure implements Serializable, Comparable<Treasure> {
     private String location;
     private Integer value;
     private Observation type;
+    private Integer strength;
     private int lastModifiedDate;
     private TreasureState state;
 
@@ -21,7 +22,15 @@ public class Treasure implements Serializable, Comparable<Treasure> {
         this.state = state;
     }
 
+    public Treasure(Integer strength) {
+        this.strength = strength;
+    }
+
     public String getLocation() {return this.location;}
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
     public Integer getValue() {
         return this.value;
@@ -39,23 +48,20 @@ public class Treasure implements Serializable, Comparable<Treasure> {
         this.type = type;
     }
 
+    public Integer getStrength() {
+        return strength;
+    }
+
+    public void setStrength(Integer strength) {
+        this.strength = strength;
+    }
+
     public int getLastModifiedDate() {
         return this.lastModifiedDate;
     }
 
     public void setLastModifiedDate(int lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
-    }
-
-    @Override
-    public String toString() {
-        return "Treasure{" +
-                "location='" + location + '\'' +
-                ", value=" + value +
-                ", type=" + type +
-                ", lastModifiedDate=" + lastModifiedDate +
-                ", state=" + state +
-                '}';
     }
 
     public TreasureState getState() {
@@ -72,6 +78,18 @@ public class Treasure implements Serializable, Comparable<Treasure> {
         if (o == null || getClass() != o.getClass()) return false;
         Treasure treasure = (Treasure) o;
         return location == treasure.location && value == treasure.value && type == treasure.type && state == treasure.state;
+    }
+
+    @Override
+    public String toString() {
+        return "Treasure{" +
+                "location='" + location + '\'' +
+                ", value=" + value +
+                ", type=" + type +
+                ", strength=" + strength +
+                ", lastModifiedDate=" + lastModifiedDate +
+                ", state=" + state +
+                '}';
     }
 
     @Override

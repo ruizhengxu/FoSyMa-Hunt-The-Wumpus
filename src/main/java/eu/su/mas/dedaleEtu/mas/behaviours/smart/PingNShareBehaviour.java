@@ -89,7 +89,7 @@ public class PingNShareBehaviour extends OneShotBehaviour {
             // Share agent info
             this.shareAgentInfo(msgReceived.getSender());
 //            System.out.println(this.myAgent.getLocalName() + " share his knowledge");
-    }
+        }
     }
 
     private void checkShareMap() {

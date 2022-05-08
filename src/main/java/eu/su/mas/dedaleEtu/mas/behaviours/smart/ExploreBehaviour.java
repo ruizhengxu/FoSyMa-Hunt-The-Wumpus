@@ -35,6 +35,11 @@ public class ExploreBehaviour extends OneShotBehaviour {
         if (((ExploreFSMAgent)this.myAgent).myMap == null)
             ((ExploreFSMAgent)this.myAgent).myMap = new MapRepresentation();
 
+		if (((ExploreFSMAgent)this.myAgent).getCurrentAgentState().equals(AgentState.COLLECT)) {
+			((ExploreFSMAgent)this.myAgent).generateStrategy();
+			this.exitValue = 2;
+		}
+
         String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
         if (myPosition != null) {
@@ -85,11 +90,29 @@ public class ExploreBehaviour extends OneShotBehaviour {
 	            List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
 	
 	            //example related to the use of the backpack for the treasure hunt
+				Treasure t = null;
 	            for(Couple<Observation,Integer> o:lObservations){
-	                switch (o.getLeft()) {
+//					System.out.println(o);
+					switch (o.getLeft()) {
 	                    case DIAMOND:case GOLD:
-							Treasure t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.FOUND);
-							((ExploreFSMAgent)this.myAgent).addTreasure(myPosition, t);
+							if (t == null) {
+								t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.FOUND);
+							} else {
+								t.setLocation(myPosition);
+								t.setType(o.getLeft());
+								t.setValue(o.getRight());
+								t.setLastModifiedDate(((ExploreFSMAgent)this.myAgent).getCurrentStep());
+								t.setState(TreasureState.FOUND);
+							}
+							break;
+						case STRENGH:
+							if (t == null) {
+								t = new Treasure(o.getRight());
+							} else {
+								t.setStrength(o.getRight());
+							}
+							break;
+						case LOCKPICKING: case LOCKSTATUS: case STENCH: case AGENTNAME:
 							break;
 	                    default: // If there is nothing in my position
 							if (((ExploreFSMAgent)this.myAgent).getTreasuresMap().containsKey(myPosition)) {// If the current position is in my treasure map so I need to remove it
@@ -101,6 +124,9 @@ public class ExploreBehaviour extends OneShotBehaviour {
 	                        break;
 	                }
 	            }
+				if (t != null) {
+					((ExploreFSMAgent)this.myAgent).addTreasure(myPosition, t);
+				}
 
 	
 	            //1) remove the current node from openlist and add it to closedNodes.

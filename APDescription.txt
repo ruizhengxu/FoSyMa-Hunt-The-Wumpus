@@ -1,1 +1,1 @@
-( ap-description  :name "Ithaq" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://Noki:7778/acc))))
+( ap-description  :name "Ithaq" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://192.168.1.105:7778/acc))))
