@@ -90,43 +90,49 @@ public class ExploreBehaviour extends OneShotBehaviour {
 	            List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
 	
 	            //example related to the use of the backpack for the treasure hunt
-				Treasure t = null;
+//				Treasure t = null;
 	            for(Couple<Observation,Integer> o:lObservations){
 //					System.out.println(o);
 					switch (o.getLeft()) {
 	                    case DIAMOND:case GOLD:
-							if (t == null) {
-								t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.FOUND);
-							} else {
-								t.setLocation(myPosition);
-								t.setType(o.getLeft());
-								t.setValue(o.getRight());
-								t.setLastModifiedDate(((ExploreFSMAgent)this.myAgent).getCurrentStep());
-								t.setState(TreasureState.FOUND);
-							}
+//							boolean open = ((AbstractDedaleAgent) this.myAgent).openLock(o.getLeft());
+//							if (t == null) {
+//								t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.LOCKED);
+//							} else {
+//								t.setLocation(myPosition);
+//								t.setType(o.getLeft());
+//								t.setValue(o.getRight());
+//								t.setLastModifiedDate(((ExploreFSMAgent)this.myAgent).getCurrentStep());
+//								t.setState(TreasureState.OPENED);
+//							}
+//							if (open) {
+//								t.setState(TreasureState.OPENED);
+//							}
+							Treasure t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.OPENED);
+							((ExploreFSMAgent)this.myAgent).addTreasure(myPosition, t);
 							break;
-						case STRENGH:
-							if (t == null) {
-								t = new Treasure(o.getRight());
-							} else {
-								t.setStrength(o.getRight());
-							}
-							break;
-						case LOCKPICKING: case LOCKSTATUS: case STENCH: case AGENTNAME:
+//						case STRENGH:
+//							if (t == null) {
+//								t = new Treasure(o.getRight());
+//							} else {
+//								t.setStrength(o.getRight());
+//							}
+//							break;
+						case LOCKPICKING: case LOCKSTATUS: case STENCH: case AGENTNAME: case STRENGH:
 							break;
 	                    default: // If there is nothing in my position
 							if (((ExploreFSMAgent)this.myAgent).getTreasuresMap().containsKey(myPosition)) {// If the current position is in my treasure map so I need to remove it
 								Treasure t_ = ((ExploreFSMAgent)this.myAgent).getTreasuresMap().get(myPosition);
-								if (t_.getState().equals(TreasureState.FOUND)) {
+								if (t_.getState().equals(TreasureState.OPENED) || t_.getState().equals(TreasureState.LOCKED)) {
 									((ExploreFSMAgent) this.myAgent).missTreasure(myPosition);
 								}
 							}
 	                        break;
 	                }
 	            }
-				if (t != null) {
-					((ExploreFSMAgent)this.myAgent).addTreasure(myPosition, t);
-				}
+//				if (t != null && t.getStrength() != null && t.getValue() != null) {
+//					((ExploreFSMAgent)this.myAgent).addTreasure(myPosition, t);
+//				}
 
 	
 	            //1) remove the current node from openlist and add it to closedNodes.

@@ -4,14 +4,11 @@ import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.smart.ExploreFSMAgent;
-import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentState;
-import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.TreasureState;
 import jade.core.behaviours.OneShotBehaviour;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -142,7 +139,7 @@ public class GarbageCollectorBehaviour extends OneShotBehaviour {
 					if (((ExploreFSMAgent)this.myAgent).getTreasureType() == o.getLeft()) {
 						//System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(((ExploreFSMAgent)this.myAgent).getTreasureType()));
 
-						Treasure t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.FOUND);
+						Treasure t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.OPENED);
 						int val = t.getValue();
 						//t.getType() Observation.GOLD
 						/* Si on trouve un même trésor que dans la liste*/

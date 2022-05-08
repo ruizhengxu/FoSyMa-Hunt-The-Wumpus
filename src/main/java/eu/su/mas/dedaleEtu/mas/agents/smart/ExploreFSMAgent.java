@@ -31,6 +31,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private HashMap<String, Treasure> treasuresMap = new HashMap<>();
     private HashMap<String, AgentInfo> agentInfo = new HashMap<>();
     private List<String> treasureToPick = new ArrayList<>();
+    private List<String> notMyTreasure = new ArrayList<>();
     private int totalStep;
     private int messageSend;
     private Integer objValue;
@@ -230,7 +231,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 //        System.out.println((this.agentInfo.size() == this.nbAgent));
 //        System.out.println((this.totalStep - this.lastMapUpdateDate > 20));
 //        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 25));
-        if ((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 15) && (this.totalStep - this.lastMapUpdateDate > 15)&& ((this.myMap.getOpenNodes().size()<3) || (! this.myMap.hasOpenNode()))) {
+        if (((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 8) && (this.totalStep - this.lastMapUpdateDate > 8) && (this.myMap.getOpenNodes().size()<3)) || (! this.myMap.hasOpenNode())) {
 //             (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 20) && (this.myMap.getOpenNodes().size()<5) && ((this.totalStep - this.lastMapUpdateDate > 15) || (! this.myMap.hasOpenNode()))
             this.setAgentState(AgentState.COLLECT);
             System.out.println("############################################################");
@@ -266,7 +267,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     public boolean isThereFoundedTreasure() {
         boolean res = false;
         for (Treasure t : this.treasuresMap.values()) {
-            if (t.getState().equals(TreasureState.FOUND)) {
+            if (t.getState().equals(TreasureState.OPENED)) {
                 res = true;
                 break;
             }
@@ -325,7 +326,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
                 } else {
                     Treasure t = this.treasuresMap.get(entry.getKey());
                     if (! t.getState().equals(entry.getValue().getState())) {
-                        if (!entry.getValue().getState().equals(TreasureState.FOUND)) {
+                        if (!entry.getValue().getState().equals(TreasureState.OPENED)) {
                             this.treasuresMap.put(entry.getKey(), entry.getValue());
                         }
                     } else if (entry.getValue().getLastModifiedDate() > t.getLastModifiedDate()) {
@@ -388,31 +389,25 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         // Initialize each agent by distributing one treasure
         for (String name: agentList) {
             List<Treasure> l = new ArrayList<>();
-            for (int i = 0; i < treasureList.size(); i++) {
-                if (treasureList.get(i).getStrength() <= this.strength) {
-                    l.add(treasureList.remove(i));
-                    break;
-                }
-            }
+            l.add(treasureList.remove(0));
             distribution.put(name, l);
         }
         System.out.println(this.getLocalName() + " - Current distrib : " + distribution);
         System.out.println(this.getLocalName() + " - Current treasure list : " + treasureList);
-        while (this.existsCompatibleTreasure(treasureList, agentList)) {
+//        while (this.existsCompatibleTreasure(treasureList, agentList)) {
+        while(treasureList.size() > 0) {
             // Find the agent who currently have the minimum value of treasure
             String name = this.getAgentWithMinValueOfTreasure(distribution);
             Treasure t = distribution.get(name).get(0);
             // Get the nearest treasure of the initial treasure t
             Treasure nearestTreasure = null;
             Integer distances = Integer.MAX_VALUE;
-            System.out.println(this.getLocalName() + " - current min agent : " + name);
+//            System.out.println(this.getLocalName() + " - current min agent : " + name);
             for (Treasure t_: treasureList) {
-                if (t_.getStrength() <= this.agentInfo.get(name).getStrength()) {
-                    Integer currentDist = this.myMap.getShortestPath(t.getLocation(), t_.getLocation()).size();
-                    if (distances > currentDist) {
-                        nearestTreasure = t_;
-                        distances = currentDist;
-                    }
+                Integer currentDist = this.myMap.getShortestPath(t.getLocation(), t_.getLocation()).size();
+                if (distances > currentDist) {
+                    nearestTreasure = t_;
+                    distances = currentDist;
                 }
             }
             // Add the nearest treasure to this agent
@@ -427,7 +422,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     private boolean existsCompatibleTreasure(List<Treasure> treasureList, List<String> agentList) {
         boolean exists = false;
-        System.out.println("calculate compatibility \n" + treasureList + "\n" + agentList);
+//        System.out.println("calculate compatibility \n" + treasureList + "\n" + agentList);
         for (String agent: agentList) {
             for (Treasure t: treasureList) {
                 if (t.getStrength() <= this.agentInfo.get(agent).getStrength())
@@ -469,7 +464,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         List<Treasure> diamondList = new ArrayList<>();
         System.out.println(this.treasuresMap);
         for (Treasure t: this.treasuresMap.values()) {
-            if (t.getState().equals(TreasureState.FOUND)) {
+            if (t.getState().equals(TreasureState.OPENED)) {
                 if (t.getType().equals(Observation.GOLD)) {
                     goldList.add(t);
                     sumOfGold += t.getValue();
@@ -592,6 +587,25 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
                 if (distances > currentDist) {
                     nearestTreasure = node;
                     distances = currentDist;
+                }
+            }
+            return nearestTreasure;
+        } else {
+            return null;
+        }
+    }
+
+    public String findNearestLockedTreasure(String myPosition) {
+        if (this.treasuresMap.size() > 0) {
+            String nearestTreasure = null;
+            Integer distances = Integer.MAX_VALUE;
+            for (Map.Entry<String, Treasure> node : this.treasuresMap.entrySet()) {
+                if (node.getValue().getState().equals(TreasureState.LOCKED) && node.getValue().getStrength() < this.strength) {
+                    Integer currentDist = this.myMap.getShortestPath(myPosition, node.getKey()).size();
+                    if (distances > currentDist) {
+                        nearestTreasure = node.getKey();
+                        distances = currentDist;
+                    }
                 }
             }
             return nearestTreasure;

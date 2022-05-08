@@ -5,12 +5,10 @@ import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.smart.ExploreFSMAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.AgentState;
-import eu.su.mas.dedaleEtu.mas.knowledge.smart.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.Treasure;
 import eu.su.mas.dedaleEtu.mas.knowledge.smart.TreasureState;
 import jade.core.behaviours.OneShotBehaviour;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -78,7 +76,7 @@ public class CollectBehaviour extends OneShotBehaviour {
                 List<Couple<Observation, Integer>> lObservations = lobs.get(0).getRight();
 
                 //example related to the use of the backpack for the treasure hunt
-                Treasure t = null;
+//                Treasure t = null;
                 for (Couple<Observation, Integer> o : lObservations) {
 //                    System.out.println(o);
                     switch (o.getLeft()) {
@@ -86,6 +84,7 @@ public class CollectBehaviour extends OneShotBehaviour {
                         case LOCKSTATUS:
                         case STENCH:
                         case AGENTNAME:
+                        case STRENGH:
                             break;
                         case DIAMOND:
                         case GOLD:
@@ -96,45 +95,55 @@ public class CollectBehaviour extends OneShotBehaviour {
                                 System.out.println(this.myAgent.getLocalName() + " - Value of the treasure on the current position: " + o.getLeft() + ": " + o.getRight());
                                 if (((ExploreFSMAgent) this.myAgent).getTreasureType().equals(Observation.ANY_TREASURE)) {
                                     ((ExploreFSMAgent) this.myAgent).setTreasureType(o.getLeft());
-                                    System.out.println(this.myAgent.getLocalName() + " - I try to open the safe: " + ((AbstractDedaleAgent) this.myAgent).openLock(Observation.ANY_TREASURE));
-                                    int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
-                                    System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
-                                    ((ExploreFSMAgent) this.myAgent).pickedTreasure(myPosition, pickedQuantity);
+                                    boolean open = ((AbstractDedaleAgent) this.myAgent).openLock(Observation.ANY_TREASURE);
+                                    if (open) {
+                                        int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
+                                        System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
+                                        ((ExploreFSMAgent) this.myAgent).pickedTreasure(myPosition, pickedQuantity);
+                                    } else {
+                                        ((ExploreFSMAgent)this.myAgent).getTreasureToPick().remove(myPosition);
+                                    }
                                 } else if (((ExploreFSMAgent) this.myAgent).getTreasureType() == o.getLeft()) {
-                                    System.out.println(this.myAgent.getLocalName() + " - I try to open the safe: " + ((AbstractDedaleAgent) this.myAgent).openLock(((ExploreFSMAgent) this.myAgent).getTreasureType()));
-                                    int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
-                                    System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
-                                    ((ExploreFSMAgent) this.myAgent).pickedTreasure(myPosition, pickedQuantity);
+                                    boolean open = ((AbstractDedaleAgent) this.myAgent).openLock(((ExploreFSMAgent) this.myAgent).getTreasureType());
+                                    if (open) {
+                                        int pickedQuantity = ((AbstractDedaleAgent) this.myAgent).pick();
+                                        System.out.println(this.myAgent.getLocalName() + " - The agent grabbed :" + pickedQuantity);
+                                        ((ExploreFSMAgent) this.myAgent).pickedTreasure(myPosition, pickedQuantity);
+                                    } else {
+                                        ((ExploreFSMAgent)this.myAgent).getTreasureToPick().remove(myPosition);
+                                    }
                                 } else {
                                     System.out.println(this.myAgent.getLocalName() + " - I can't pick up this treasure");
                                 }
                                 System.out.println(this.myAgent.getLocalName() + " - the remaining backpack capacity is: " + ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
                             } else {
-                                if (t == null) {
-                                    t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.FOUND);
-                                } else {
-                                    t.setLocation(myPosition);
-                                    t.setType(o.getLeft());
-                                    t.setValue(o.getRight());
-                                    t.setLastModifiedDate(((ExploreFSMAgent)this.myAgent).getCurrentStep());
-                                    t.setState(TreasureState.FOUND);
-                                }
+                                Treasure t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.OPENED);
+                                ((ExploreFSMAgent)this.myAgent).addTreasure(myPosition, t);
+//                                if (t == null) {
+//                                    t = new Treasure(myPosition, o.getLeft(), o.getRight(), ((ExploreFSMAgent)this.myAgent).getCurrentStep(), TreasureState.OPENED);
+//                                } else {
+//                                    t.setLocation(myPosition);
+//                                    t.setType(o.getLeft());
+//                                    t.setValue(o.getRight());
+//                                    t.setLastModifiedDate(((ExploreFSMAgent)this.myAgent).getCurrentStep());
+//                                    t.setState(TreasureState.OPENED);
+//                                }
                             }
                             break;
-                        case STRENGH:
-                            if (t == null) {
-                                t = new Treasure(o.getRight());
-                            } else {
-                                t.setStrength(o.getRight());
-                            }
-                            break;
+//                        case STRENGH:
+//                            if (t == null) {
+//                                t = new Treasure(o.getRight());
+//                            } else {
+//                                t.setStrength(o.getRight());
+//                            }
+//                            break;
                         default: // If there is nothing in my position
 //                            System.out.println(this.myAgent.getLocalName() + " - " + " my position is " + myPosition);
 //                            System.out.println(this.myAgent.getLocalName() + " - " + " there is nothing in my position");
 //                            System.out.println(((ExploreFSMAgent) this.myAgent).getTreasureToPick());
                             if (((ExploreFSMAgent) this.myAgent).getTreasuresMap().containsKey(myPosition)) {// If the current position is in my treasure map so I need to remove it
                                 Treasure t_ = ((ExploreFSMAgent) this.myAgent).getTreasuresMap().get(myPosition);
-                                if (t_.getState().equals(TreasureState.FOUND)) {
+                                if (t_.getState().equals(TreasureState.OPENED)) {
                                     ((ExploreFSMAgent) this.myAgent).missTreasure(myPosition);
                                 }
                             }
@@ -144,6 +153,10 @@ public class CollectBehaviour extends OneShotBehaviour {
                             break;
                     }
                 }
+//                if (t != null && t.getStrength() != null && t.getValue() != null) {
+//                    ((ExploreFSMAgent)this.myAgent).addTreasure(myPosition, t);
+//                }
+
 
                 if (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.GOLD) && ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace().get(0).getRight() == 0) {
                     this.exitValue = 3;
