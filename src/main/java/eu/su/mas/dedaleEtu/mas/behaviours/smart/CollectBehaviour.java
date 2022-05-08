@@ -181,7 +181,8 @@ public class CollectBehaviour extends OneShotBehaviour {
                             ((ExploreFSMAgent) this.myAgent).increaseStep();
                         }
                     } else {
-                        if (((ExploreFSMAgent)this.myAgent).isThereFoundedTreasure()) {
+                        if ((((ExploreFSMAgent)this.myAgent).isThereFoundedTreasure()) || (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.GOLD) && ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace().get(0).getRight() > 0)
+                                || (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.DIAMOND) && ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace().get(1).getRight() > 0)) {
                             this.exitValue = 2;
                         } else {
                             this.exitValue = 3;
