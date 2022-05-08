@@ -109,7 +109,7 @@ public class InterBlockedBehaviour extends OneShotBehaviour {
     private void messageTool() {
         //System.out.println(((AbstractDedaleAgent) this.myAgent).getLocalName());
         char[] currentName = ((AbstractDedaleAgent) this.myAgent).getLocalName().toCharArray();
-        Integer idx = Character.getNumericValue(currentName[5]);
+        Integer idx = Character.getNumericValue(currentName[1]);
 
         for (int i = 0; i < ((ExploreFSMAgent) this.myAgent).getNbAgent(); i++) {
 

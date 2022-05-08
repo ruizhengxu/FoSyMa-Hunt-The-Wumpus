@@ -77,12 +77,13 @@ public final class ConfigurationFile {
 	
 //	public static String INSTANCE_TOPOLOGY="resources/topology/map2020-topologyExam1-graph.dgs";
 //	public static String INSTANCE_TOPOLOGY="resources/topology/HouatTopology";
-	public static String INSTANCE_TOPOLOGY="resources/topology/map2018-topology-ica";
+//public static String INSTANCE_TOPOLOGY="resources/topology/map2018-topology-ica";
 	//public static String INSTANCE_TOPOLOGY="resources/topology/map2021-topologyExam1-tree.dgs";
 	// public static String INSTANCE_TOPOLOGY="resources/interlocking/mapInterlocking2-topology";
 	//public static String INSTANCE_TOPOLOGY="resources/topology/map2021-topologyExam1-graph.dgs";
 	// public static String INSTANCE_TOPOLOGY="resources/map2018-topology";
 	// public static String INSTANCE_TOPOLOGY="resources/topology/map2019-topologyExam1";
+	public static String INSTANCE_TOPOLOGY="resources/topology/map2022-topologyExam.dgs";
 
 	
 	/**
@@ -95,10 +96,11 @@ public final class ConfigurationFile {
 //	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2019-elementsExam1";
 //	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/Houat-elements";
 //	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2018-elements-ica";
-	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2018-elements-ica-nowell";
+//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2018-elements-ica-nowell";
 	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/interlocking/mapInterlocking2-elements";
 //	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/map2018-elements";
 //	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/mapInterlocking2-elements";
+public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2022-elements";
 	
 	
 	
@@ -151,7 +153,7 @@ public final class ConfigurationFile {
 //	public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExplo";
 //	public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExplo-2";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExploFSM-2";
-	public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExploFSM-4";
+//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExploFSM-4";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExploCoop-2";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExploCoop-2.json";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentKeyboardControlled";
@@ -164,6 +166,7 @@ public final class ConfigurationFile {
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/monoAgent-entities";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/mapInterlocking2-entities";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES=null;
+	public static String INSTANCE_CONFIGURATION_ENTITIES="resources/map2022-entities.json";
 	
 
 
