@@ -50,7 +50,7 @@ public class PingNShareBehaviour extends OneShotBehaviour {
             if (((ExploreFSMAgent) this.myAgent).isBlocked())
                 msg.setContent(STATE_BLOCKED);
             else
-                msg.setContent("Hi");
+                msg.setContent(Integer.toString(((ExploreFSMAgent) this.myAgent).getPassNb()));
 
             //        System.out.println(this.myAgent.getLocalName() + " sending message..");
             ((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
@@ -59,8 +59,9 @@ public class PingNShareBehaviour extends OneShotBehaviour {
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // Check mailbox
-        this.checkPing();
-        this.checkShareMap();
+        String s = this.checkPing();
+        if(!s.equals(""))
+            this.checkShareMap(s);
         this.checkShareTreasure();
         this.checkShareAgentInfo();
 
@@ -74,7 +75,7 @@ public class PingNShareBehaviour extends OneShotBehaviour {
         return this.exitValue;
     }
 
-    private void checkPing() {
+    private String checkPing() {
         MessageTemplate msgTemplate=MessageTemplate.and(
                 MessageTemplate.MatchProtocol("SHARE-PING"),
                 MessageTemplate.MatchPerformative(ACLMessage.INFORM));
@@ -88,24 +89,28 @@ public class PingNShareBehaviour extends OneShotBehaviour {
                 this.shareTreasuresMap(msgReceived.getSender());
             // Share agent info
             this.shareAgentInfo(msgReceived.getSender());
+            return msgReceived.getContent();
 //            System.out.println(this.myAgent.getLocalName() + " share his knowledge");
         }
+        return new String();
     }
 
-    private void checkShareMap() {
+    private void checkShareMap(String s) {
         MessageTemplate msgTemplate=MessageTemplate.and(
                 MessageTemplate.MatchProtocol("SHARE-MAP"),
                 MessageTemplate.MatchPerformative(ACLMessage.INFORM));
         ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 
-        if (msgReceived !=  null) {
-            SerializableSimpleGraph<String, MapRepresentation.MapAttribute> receivedMap = null;
-            try {
-                receivedMap = (SerializableSimpleGraph<String, MapRepresentation.MapAttribute>) msgReceived.getContentObject();
-            } catch (UnreadableException e) {
-                e.printStackTrace();
+        if (!s.equals("BLOCKED")){
+            if (msgReceived !=  null && Integer.parseInt(s) == ((ExploreFSMAgent) this.myAgent).getPassNb()) {
+                SerializableSimpleGraph<String, MapRepresentation.MapAttribute> receivedMap = null;
+                try {
+                    receivedMap = (SerializableSimpleGraph<String, MapRepresentation.MapAttribute>) msgReceived.getContentObject();
+                } catch (UnreadableException e) {
+                    e.printStackTrace();
+                }
+                ((ExploreFSMAgent) this.myAgent).mergeMap(receivedMap);
             }
-            ((ExploreFSMAgent) this.myAgent).mergeMap(receivedMap);
         }
     }
 

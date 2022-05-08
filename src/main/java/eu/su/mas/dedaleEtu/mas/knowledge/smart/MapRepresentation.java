@@ -311,6 +311,8 @@ public class MapRepresentation implements Serializable {
 	}
 
 
-
+	public void clear() {
+		g.clear();
+	}
 
 }

@@ -35,6 +35,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private int totalStep;
     private int messageSend;
     private Integer objValue;
+    private Integer passNb = 0;
 
     // State names
     private static final String PINGNSHARE = "A";
@@ -52,7 +53,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     private String nextMove = null;
 
-    private Integer time = 100;
+    private Integer time = 1000;
     private Integer nbAgent;
     private ArrayList<Integer> findedOnLastPass = new ArrayList<Integer>();
     private List<Treasure> strategy;
@@ -103,6 +104,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
         fsm.registerDefaultTransition(FINISH, FINISH);
         fsm.registerTransition(FINISH, INTERBLOCK, 1);
+        fsm.registerTransition(FINISH, EXPLO, 2);
         fsm.registerTransition(INTERBLOCK, FINISH, 2);
 
         List<Behaviour> lb = new ArrayList<Behaviour>();
@@ -664,5 +666,13 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     public List<Treasure> getStrategy() {
         return this.strategy;
+    }
+
+    public Integer getPassNb() {
+        return this.passNb;
+    }
+
+    public void increasePassNb() {
+        ++this.passNb;
     }
 }
