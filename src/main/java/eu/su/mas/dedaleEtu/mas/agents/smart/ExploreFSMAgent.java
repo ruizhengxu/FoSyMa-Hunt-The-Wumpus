@@ -233,7 +233,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 //        System.out.println((this.agentInfo.size() == this.nbAgent));
 //        System.out.println((this.totalStep - this.lastMapUpdateDate > 20));
 //        System.out.println((this.totalStep - this.lastTreasureUpdateDate > 25));
-        if (((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 8) && (this.totalStep - this.lastMapUpdateDate > 8) && (this.myMap.getOpenNodes().size()<3)) || (! this.myMap.hasOpenNode())) {
+        if (((this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 12) && (this.totalStep - this.lastMapUpdateDate > 12) && (this.myMap.getOpenNodes().size()<4)) || (! this.myMap.hasOpenNode())) {
 //             (this.agentInfo.size() == this.nbAgent) && (this.totalStep - this.lastTreasureUpdateDate > 20) && (this.myMap.getOpenNodes().size()<5) && ((this.totalStep - this.lastMapUpdateDate > 15) || (! this.myMap.hasOpenNode()))
             this.setAgentState(AgentState.COLLECT);
             System.out.println("############################################################");
@@ -389,11 +389,13 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     private HashMap<String, List<Treasure>> kMeans(List<Treasure> treasureList, List<String> agentList) {
         HashMap<String, List<Treasure>> distribution = new HashMap<>();
         // Initialize each agent by distributing one treasure
+        System.out.println("kmeans : " + treasureList + "\n" + agentList);
         for (String name: agentList) {
             List<Treasure> l = new ArrayList<>();
             l.add(treasureList.remove(0));
             distribution.put(name, l);
         }
+
         System.out.println(this.getLocalName() + " - Current distrib : " + distribution);
         System.out.println(this.getLocalName() + " - Current treasure list : " + treasureList);
 //        while (this.existsCompatibleTreasure(treasureList, agentList)) {
@@ -458,98 +460,168 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
     }
 
     public void generateStrategy() {
-        int sumOfGold = 0;
-        int sumOfDiamond = 0;
-        List<String> goldAgentList = new ArrayList<>();
-        List<Treasure> goldList = new ArrayList<>();
-        List<String> diamondAgentList = new ArrayList<>();
-        List<Treasure> diamondList = new ArrayList<>();
-        System.out.println(this.treasuresMap);
-        for (Treasure t: this.treasuresMap.values()) {
-            if (t.getState().equals(TreasureState.OPENED)) {
-                if (t.getType().equals(Observation.GOLD)) {
-                    goldList.add(t);
-                    sumOfGold += t.getValue();
-                } else {
-                    diamondList.add(t);
-                    sumOfDiamond += t.getValue();
+        if (this.treasureType.equals(Observation.ANY_TREASURE)) {
+            int sumOfGold = 0;
+            int sumOfDiamond = 0;
+            List<String> goldAgentList = new ArrayList<>();
+            List<Treasure> goldList = new ArrayList<>();
+            List<String> diamondAgentList = new ArrayList<>();
+            List<Treasure> diamondList = new ArrayList<>();
+            System.out.println(this.treasuresMap);
+            for (Treasure t: this.treasuresMap.values()) {
+                if (t.getState().equals(TreasureState.OPENED)) {
+                    if (t.getType().equals(Observation.GOLD)) {
+                        goldList.add(t);
+                        sumOfGold += t.getValue();
+                    } else {
+                        diamondList.add(t);
+                        sumOfDiamond += t.getValue();
+                    }
                 }
             }
-        }
-        Collections.sort(goldList);
-        Collections.sort(diamondList);
-        this.objValue = (sumOfGold+sumOfDiamond)/this.nbAgent; // Objective value of each agent
-        int nbRequiredForDiamond = Math.min((int)Math.ceil((double)sumOfDiamond/this.objValue), diamondList.size()); // Number of agent to collect diamond
-        int nbRequiredForGold = Math.min(this.nbAgent-nbRequiredForDiamond, goldList.size()); // Number of agent to collect gold
+            Collections.sort(goldList);
+            Collections.sort(diamondList);
+            this.objValue = (sumOfGold+sumOfDiamond)/this.nbAgent; // Objective value of each agent
+            int nbRequiredForDiamond = Math.min((int)Math.ceil((double)sumOfDiamond/this.objValue), diamondList.size()); // Number of agent to collect diamond
+            int nbRequiredForGold = Math.min(this.nbAgent-nbRequiredForDiamond, goldList.size()); // Number of agent to collect gold
 
-        List<AgentInfo> agentList = new ArrayList<>();
-        for (AgentInfo info: this.agentInfo.values()) {
-            agentList.add(info);
-        }
+            List<AgentInfo> agentList = new ArrayList<>();
+            for (AgentInfo info: this.agentInfo.values()) {
+                agentList.add(info);
+            }
 
-        System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, this.objValue, nbRequiredForGold, nbRequiredForDiamond);
+            System.out.printf("%d %d %d %d %d\n", sumOfGold, sumOfDiamond, this.objValue, nbRequiredForGold, nbRequiredForDiamond);
 
-        while (agentList.size() > 0) {
-            if (nbRequiredForGold >= nbRequiredForDiamond) {
-                if (agentList.size() > 1) {
-                    AgentInfo ag1 = getAgentWithHighestCapOfGold(agentList);
-                    agentList.remove(ag1);
-                    AgentInfo ag2 = getAgentWithHighestCapOfGold(agentList);
-                    agentList.remove(ag2);
-                    if (ag1.getGoldCapacity()/ag1.getDiamondCapacity() < ag2.getGoldCapacity()/ag2.getDiamondCapacity()) {
-                        agentList.add(ag2);
-                        goldAgentList.add(ag1.getName());
-                        nbRequiredForGold -= 1;
-                    } else {
-                        agentList.add(ag1);
-                        goldAgentList.add(ag2.getName());
-                        nbRequiredForGold -= 1;
-                    }
-                } else {
-                    AgentInfo ag = getAgentWithHighestCapOfGold(agentList);
-                    goldAgentList.add(ag.getName());
+//            for (AgentInfo agent: agentList) {
+//                double ratio = agent.getGoldCapacity()/agent.getDiamondCapacity();
+//                if (ratio < 0.25 && nbRequiredForDiamond > 0) {
+//                    agentList.remove(agent);
+//                    diamondAgentList.add(agent.getName());
+//                    nbRequiredForDiamond -= 1;
+//                }
+//                if (ratio > 2 && nbRequiredForGold > 0) {
+//                    agentList.remove(agent);
+//                    goldAgentList.add(agent.getName());
+//                    nbRequiredForGold -= 1;
+//                }
+//            }
+
+            double stdG = calculateStdG(agentList);
+            double stdD = calculateStdD(agentList);
+            double confidenceGAt95 = (stdG/Math.sqrt(agentList.size()))*1.96;
+            double confidenceDAt95 = (stdD/Math.sqrt(agentList.size()))*1.96;
+            while (agentList.size() > 0) {
+                AgentInfo ag = agentList.get(0);
+                double ratioGD = ag.getGoldCapacity()/ag.getDiamondCapacity();
+                if (diamondList.size() > diamondAgentList.size() && (ag.getDiamondCapacity() > stdD + confidenceDAt95 || ratioGD < 0.33)) {
                     agentList.remove(ag);
-                    nbRequiredForGold -= 1;
-                }
-            } else {
-                if (agentList.size() > 1) {
-                    AgentInfo ag1 = getAgentWithHighestCapOfDiamond(agentList);
-                    agentList.remove(ag1);
-                    AgentInfo ag2 = getAgentWithHighestCapOfDiamond(agentList);
-                    agentList.remove(ag2);
-                    if (ag1.getGoldCapacity()/ag1.getDiamondCapacity() < ag2.getGoldCapacity()/ag2.getDiamondCapacity()) {
-                        agentList.add(ag2);
-                        diamondAgentList.add(ag1.getName());
-                        nbRequiredForDiamond -= 1;
-                    } else {
-                        agentList.add(ag1);
-                        diamondAgentList.add(ag2.getName());
-                        nbRequiredForDiamond -= 1;
-                    }
-                } else {
-                    AgentInfo ag = getAgentWithHighestCapOfDiamond(agentList);
                     diamondAgentList.add(ag.getName());
+                } else if (ag.getGoldCapacity() > stdG + confidenceGAt95 || ratioGD > 0.33) {
                     agentList.remove(ag);
-                    nbRequiredForDiamond -= 1;
+                    goldAgentList.add(ag.getName());
+                } else {
+//                    Random rand = new Random();
+//                    if (rand.nextInt(2) == 0) {
+//                        agentList.remove(ag);
+//                        diamondAgentList.add(ag.getName());
+//                    } else {
+                    agentList.remove(ag);
+                    goldAgentList.add(ag.getName());
+//                    }
                 }
+//                if (nbRequiredForGold >= nbRequiredForDiamond) {
+//                    if (agentList.size() > 1) {
+//                        AgentInfo ag1 = getAgentWithHighestCapOfGold(agentList);
+//                        agentList.remove(ag1);
+//                        AgentInfo ag2 = getAgentWithHighestCapOfGold(agentList);
+//                        agentList.remove(ag2);
+//                        if (ag1.getGoldCapacity()/ag1.getDiamondCapacity() < ag2.getGoldCapacity()/ag2.getDiamondCapacity()) {
+//                            agentList.add(ag2);
+//                            goldAgentList.add(ag1.getName());
+//                            nbRequiredForGold -= 1;
+//                        } else {
+//                            agentList.add(ag1);
+//                            goldAgentList.add(ag2.getName());
+//                            nbRequiredForGold -= 1;
+//                        }
+//                    } else {
+//                        AgentInfo ag = getAgentWithHighestCapOfGold(agentList);
+//                        goldAgentList.add(ag.getName());
+//                        agentList.remove(ag);
+//                        nbRequiredForGold -= 1;
+//                    }
+//                } else {
+//                    if (agentList.size() > 1) {
+//                        AgentInfo ag1 = getAgentWithHighestCapOfDiamond(agentList);
+//                        agentList.remove(ag1);
+//                        AgentInfo ag2 = getAgentWithHighestCapOfDiamond(agentList);
+//                        agentList.remove(ag2);
+//                        if (ag1.getGoldCapacity()/ag1.getDiamondCapacity() < ag2.getGoldCapacity()/ag2.getDiamondCapacity()) {
+//                            agentList.add(ag2);
+//                            diamondAgentList.add(ag1.getName());
+//                            nbRequiredForDiamond -= 1;
+//                        } else {
+//                            agentList.add(ag1);
+//                            diamondAgentList.add(ag2.getName());
+//                            nbRequiredForDiamond -= 1;
+//                        }
+//                    } else {
+//                        AgentInfo ag = getAgentWithHighestCapOfDiamond(agentList);
+//                        diamondAgentList.add(ag.getName());
+//                        agentList.remove(ag);
+//                        nbRequiredForDiamond -= 1;
+//                    }
+//                }
+            }
+
+            System.out.println(this.getLocalName() + " - gold list : "+ goldAgentList);
+            System.out.println(this.getLocalName() + " - diamond list : "+ diamondAgentList);
+            HashMap<String, List<Treasure>> strategy = null;
+            if (goldAgentList.contains(this.getLocalName())) {
+                strategy = this.kMeans(goldList, goldAgentList);
+            } else {
+                strategy = this.kMeans(diamondList, diamondAgentList);
+            }
+            System.out.println(this.getLocalName() + " - My strategy is : " + strategy.get(this.getLocalName()));
+
+            for (Treasure t: strategy.get(this.getLocalName())) {
+                this.treasureToPick.add(t.getLocation());
+            }
+
+            this.strategy = strategy.get(this.getLocalName());
+        } else {
+            for (Map.Entry<String, Treasure> t: this.treasuresMap.entrySet()) {
+                if (t.getValue().getState().equals(TreasureState.OPENED) && t.getValue().getType().equals(this.treasureType))
+                    this.treasureToPick.add(t.getKey());
             }
         }
+    }
 
-        System.out.println(this.getLocalName() + " - gold list : "+ goldAgentList);
-        System.out.println(this.getLocalName() + " - diamond list : "+ diamondAgentList);
-        HashMap<String, List<Treasure>> strategy = null;
-        if (goldAgentList.contains(this.getLocalName())) {
-            strategy = this.kMeans(goldList, goldAgentList);
-        } else {
-            strategy = this.kMeans(diamondList, diamondAgentList);
+    private double calculateStdG(List<AgentInfo> agentList) {
+        double sum = 0.0;
+        double std = 0.0;
+        for (AgentInfo ag: agentList) {
+            sum += ag.getGoldCapacity();
         }
-        System.out.println(this.getLocalName() + " - My strategy is : " + strategy.get(this.getLocalName()));
-
-        for (Treasure t: strategy.get(this.getLocalName())) {
-            this.treasureToPick.add(t.getLocation());
+        double mean = sum/(agentList.size());
+        for (AgentInfo ag: agentList) {
+            std += Math.pow((ag.getGoldCapacity() - mean), 2);
         }
+        return Math.sqrt(std/(agentList.size()));
+    }
 
-        this.strategy = strategy.get(this.getLocalName());
+    private double calculateStdD(List<AgentInfo> agentList) {
+        double sum = 0.0;
+        double std = 0.0;
+        for (AgentInfo ag: agentList) {
+            sum += ag.getDiamondCapacity();
+
+        }
+        double mean = sum/(agentList.size());
+        for (AgentInfo ag: agentList) {
+            std += Math.pow((ag.getDiamondCapacity() - mean), 2);
+        }
+        return Math.sqrt(std/(agentList.size()));
     }
 
     private AgentInfo getAgentWithHighestCapOfGold(List<AgentInfo> agentList) {
