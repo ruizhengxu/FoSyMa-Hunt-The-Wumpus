@@ -118,11 +118,13 @@ public class GarbageCollectorBehaviour extends OneShotBehaviour {
 							if(((AbstractDedaleAgent)this.myAgent).getCurrentPosition().equals(where)) {
 								omw = false;
 							} else {
-								System.out.println(myPosition);
-							System.out.println(where);
-								String targetedNode = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPath(myPosition, where).get(0);
-								((AbstractDedaleAgent) this.myAgent).moveTo(targetedNode);
-								((ExploreFSMAgent)this.myAgent).increaseStep();
+								// System.out.println(myPosition);
+								// System.out.println(where);
+								if (((ExploreFSMAgent)this.myAgent).myMap.getOpenNodes().contains(where) || ((ExploreFSMAgent)this.myAgent).myMap.getClosedNodes().contains(where)){
+									String targetedNode = ((ExploreFSMAgent)this.myAgent).myMap.getShortestPath(myPosition, where).get(0);
+									((AbstractDedaleAgent) this.myAgent).moveTo(targetedNode);
+									((ExploreFSMAgent)this.myAgent).increaseStep();
+								}
 							}
 							
 						}
@@ -133,7 +135,7 @@ public class GarbageCollectorBehaviour extends OneShotBehaviour {
 					// -- --> On ramasse ce qu'on peut sans trop dépasser la valeur ideale (disons 20% au dessus)
 				} else {
 					// finish
-					//System.out.println(this.myAgent.getLocalName() + " END -- RANDOM MOVE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+					System.out.println(this.myAgent.getLocalName() + " END -- RANDOM MOVE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 					/* Move randomly */
 					List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this.myAgent).observe();
 					int index = 1 + new Random().nextInt(obs.size() - 1);

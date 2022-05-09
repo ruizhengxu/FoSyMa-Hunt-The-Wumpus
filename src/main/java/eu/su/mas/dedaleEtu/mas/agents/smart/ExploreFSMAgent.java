@@ -53,7 +53,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
 
     private String nextMove = null;
 
-    private Integer time = 1000;
+    private Integer time = 100;
     private Integer nbAgent;
     private ArrayList<Integer> findedOnLastPass = new ArrayList<Integer>();
     private List<Treasure> strategy;
@@ -704,6 +704,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
                 e.printStackTrace();
             }
             /* Move randomly */
+            
             List<Couple<String, List<Couple<Observation, Integer>>>> obs = ((AbstractDedaleAgent) this).observe();
             int index = 1 + new Random().nextInt(obs.size() - 1);
             String pos = obs.get(index).getLeft();
