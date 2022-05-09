@@ -99,8 +99,7 @@ public class ExploreFSMAgent extends AbstractDedaleAgent {
         fsm.registerTransition(INTERBLOCK, COLLECT, 1);
         fsm.registerDefaultTransition(COLLECT, PINGNSHARE);
         fsm.registerTransition(COLLECT, INTERBLOCK, 1);
-        fsm.registerTransition(COLLECT, EXPLO, 2);
-        fsm.registerTransition(COLLECT, FINISH, 3);
+        fsm.registerTransition(COLLECT, FINISH, 2);
 
         fsm.registerDefaultTransition(FINISH, FINISH);
         fsm.registerTransition(FINISH, INTERBLOCK, 1);

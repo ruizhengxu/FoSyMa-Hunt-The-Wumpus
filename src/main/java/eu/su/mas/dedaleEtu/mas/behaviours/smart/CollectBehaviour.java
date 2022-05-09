@@ -159,10 +159,10 @@ public class CollectBehaviour extends OneShotBehaviour {
 
 
                 if (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.GOLD) && ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace().get(0).getRight() == 0) {
-                    this.exitValue = 3;
+                    this.exitValue = 2;
                     ((ExploreFSMAgent) this.myAgent).setAgentState(AgentState.FINISH);
                 } else if (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.DIAMOND) && ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace().get(1).getRight() == 0) {
-                    this.exitValue = 3;
+                    this.exitValue = 2;
                     ((ExploreFSMAgent) this.myAgent).setAgentState(AgentState.FINISH);
                 } else {
                     String nearestTreasure = ((ExploreFSMAgent) this.myAgent).findNearestTreasure(myPosition);
@@ -181,13 +181,10 @@ public class CollectBehaviour extends OneShotBehaviour {
                             ((ExploreFSMAgent) this.myAgent).increaseStep();
                         }
                     } else {
-                        if ((((ExploreFSMAgent)this.myAgent).isThereFoundedTreasure()) || (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.GOLD) && ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace().get(0).getRight() > 0)
-                                || (((ExploreFSMAgent)this.myAgent).getTreasureType().equals(Observation.DIAMOND) && ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace().get(1).getRight() > 0)) {
-                            this.exitValue = 2;
-                        } else {
-                            this.exitValue = 3;
-                            ((ExploreFSMAgent) this.myAgent).setAgentState(AgentState.FINISH);
-                        }
+                        
+                        this.exitValue = 2;
+                        ((ExploreFSMAgent) this.myAgent).setAgentState(AgentState.FINISH);
+                        
                     }
                 }
             }
